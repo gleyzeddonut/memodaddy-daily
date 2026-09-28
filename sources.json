@@ -1,0 +1,14 @@
+{
+  "_comment": "Curation for the Daily theme. `collections` are Unsplash collection ids from your own account (unsplash.com/collections/<id>/...). `queries` are search terms for days you have no collection yet. Sources are interleaved so moods mix across days. Run `npm run pull` after editing.",
+  "collections": [],
+  "queries": [
+    "misty forest morning",
+    "quiet room window light",
+    "ocean at dusk",
+    "city night rain",
+    "desert dunes soft light",
+    "mountain lake fog"
+  ],
+  "perSource": 20,
+  "maxImages": 120
+}
