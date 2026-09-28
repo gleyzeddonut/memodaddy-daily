@@ -121,11 +121,20 @@ README.md.
   (`line`, `validated`), `DailyManifest.validated`, the `@Observable`
   `DailyBackgrounds` (index maths, refresh, cache, load, `credit`,
   `downloadPingRequest(for:accessKey:)`, `unsplashAccessKey`).
+- `Mumo/Daily/DailyPalette.swift`: `DailyColors.extract(from:)` — on-device
+  colour extraction (vivid hue vote, brightness-gated; average colour;
+  light/dark by luma). `Theme.daily(from:)` in `Views/Theme.swift` builds
+  the palette; `Theme.dailyPalette` holds it while the theme is Daily and
+  is written by `DailyBackgrounds` before the image publishes. ContentView
+  re-keys its tree on theme + `currentID`. Works for any image, so artist
+  and hand-added photos get matched colours too; the manifest `color`
+  field is informational only.
 - `Mumo/Views/FrontPageView.swift`: `dailyImage`, `dailyCredit` inputs;
   `dailyBackdrop` (photo + page-colour gradient, 18% while recording);
-  `creditLine` (11pt medium, 32% opacity, top-to-bottom fade mask, centred
-  `creditBottom` = 92pt off the screen bottom, i.e. between the record
-  ring (bottom edge at 128pt) and the nav (~78pt); hidden unless mode is
+  `creditLine` (11pt medium, 22% opacity, right-aligned with 20pt
+  trailing, fade mask over the padded box so descenders survive, text
+  bottom ~96pt off the screen bottom, i.e. between the record ring
+  (bottom edge at 128pt) and the nav (~78pt); hidden unless mode is
   idle/saved; tap opens `credit.link`).
 - `Mumo/Views/ContentView.swift`: owns `DailyBackgrounds`, passes image
   and credit when `appTheme == daily`, calls `refreshIfNeeded()` on
@@ -134,6 +143,8 @@ README.md.
   + `cat-lounge.jpg`). Xcode copies these flat; `bundledURL` tries both.
 - `MumoTests/DailyBackgroundsTests.swift`: 9 tests (index maths,
   decoding, validation, credit line, ping request scoping).
+  `MumoTests/DailyPaletteTests.swift`: 5 (extraction on synthetic images,
+  derived palette light/dark, muted accents stay muted).
 
 ## Verifying
 
@@ -173,6 +184,10 @@ succeeds, which is fine once main matches.
 - The ping fires only when the photo is first applied in a process; a
   phone left open across midnight applies the next day's photo on the
   next foreground, which also pings. Good enough.
+- `index(for:)` counts days from the epoch's *local* start of day
+  (epoch is 2026-01-01 00:00 UTC), so in US zones the app is one day
+  ahead of a naive UTC `days % count`. Harmless; just don't expect a
+  quick script to name today's entry without mirroring that.
 - The raw GitHub URL is a fine origin at current scale (one JSON fetch
   per phone per day). If it ever isn't, put the manifest behind any
   static host; the app only needs an HTTPS URL that returns this JSON.
