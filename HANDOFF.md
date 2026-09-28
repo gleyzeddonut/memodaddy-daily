@@ -105,8 +105,10 @@ without a keep.
 
 - **Hotlink**, never re-host photos obtained through the API (the site's
   download button + hand-added entry is the legal way to own a file).
-- **Attribute**: "Photo by <name> on Unsplash", with the utm-tagged
-  links. The app shows it; the script writes it.
+- **Attribute**: "Photo by <name> on Unsplash", name linked to the
+  photographer and "Unsplash" to unsplash.com, both utm-tagged
+  (`DailyCredit.attributedLine`). The page writes the links; the app
+  shows them.
 - **Ping `download_location`** when a photo is used as a background. The
   app does, once per photo per run.
 - The Access Key is a public client id. It lives in this repo's
@@ -116,8 +118,10 @@ without a keep.
 - Rate limit maths: one ping per phone per day. Past ~50 phones opening
   in the same hour the ping is throttled; nothing visible breaks, it
   only under-reports. Fix at that point: apply for production on
-  unsplash.com/developers (free, raises to 5,000/h; they raise further
-  on request for popular apps).
+  unsplash.com/developers (free; Unsplash's own checklist says
+  production is 1,000 requests/hour, raised further on request for
+  popular apps). Application text + screenshots are drafted in
+  `~/Documents/CLAUDE/background pics/unsplash-application/`.
 
 ## App-side file map (mumo)
 
