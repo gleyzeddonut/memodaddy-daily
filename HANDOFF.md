@@ -203,6 +203,10 @@ succeeds, which is fine once main matches.
   (epoch is 2026-01-01 00:00 UTC), so in US zones the app is one day
   ahead of a naive UTC `days % count`. Harmless; just don't expect a
   quick script to name today's entry without mirroring that.
+- **Preview button in the app** (testing aid): with
+  `DailyBackgrounds.previewControlsEnabled` true, a `→` top-right on the
+  front page steps through the manifest in day order without pinging
+  Unsplash. Dan intends to turn it off for launch.
 - The raw GitHub URL is a fine origin at current scale (one JSON fetch
   per phone per day). If it ever isn't, put the manifest behind any
   static host; the app only needs an HTTPS URL that returns this JSON.
