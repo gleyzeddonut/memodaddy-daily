@@ -133,6 +133,13 @@ without a keep.
   re-keys its tree on theme + `currentID`. Works for any image, so artist
   and hand-added photos get matched colours too; the manifest `color`
   field is informational only.
+- Tuner-link legibility (mumo `Theme.legibleAccent`, `Palette.linkAccent`,
+  `DailyColors.linkRegionLuminance`): the accent is re-depthed to clear
+  4:1 over the photo patch behind the link; the page mirrors it
+  (`legibleAccent`, `LEGIBILITY_TARGET` in palette.js) and prints
+  "tuner contrast over the photo N:1", flagging a fall-back to plain
+  black/white. Photos that pass on average but look busy behind the
+  link are still a taste call — reject them.
 - `Mumo/Views/FrontPageView.swift`: `dailyImage`, `dailyCredit` inputs;
   `dailyBackdrop` (photo + page-colour gradient, 18% while recording);
   `creditLine` (11pt medium, 22% opacity, right-aligned with 20pt
@@ -203,4 +210,5 @@ succeeds, which is fine once main matches.
 - Sep 28: Unsplash feed (pull script, credit + ping in the app), first
   120-entry rotation pushed. mumo `42324e9`, memodaddy-daily `d554cf9`.
 - Sep 28, later: photo-matched palette in the app (mumo `97ccda4`), then
-  the curation page here replacing the pull script.
+  the curation page here replacing the pull script (`bc92b99`), then the
+  tuner-link legibility rule in both.
