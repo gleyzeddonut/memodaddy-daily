@@ -3,6 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "pull": "node scripts/pull-unsplash.mjs"
+    "curate": "node scripts/curate.mjs",
+    "build": "node scripts/build-manifest.mjs"
   }
 }

@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Daily curation</title>
+<style>
+  :root {
+    color-scheme: light dark;
+    --bg: #f4f4f6; --panel: #ffffff; --ink: #111; --muted: #6d6d72; --line: #e1e1e6;
+    --keep: #1f9d55; --reject: #d64545; --accent: #0a66ff;
+    font-family: -apple-system, "SF Pro Text", system-ui, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #141416; --panel: #1e1e22; --ink: #f2f2f5; --muted: #9a9aa3; --line: #2c2c32; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); height: 100vh; display: grid; grid-template-rows: auto 1fr auto; }
+  header { display: flex; gap: 12px; align-items: center; padding: 10px 16px; border-bottom: 1px solid var(--line); background: var(--panel); flex-wrap: wrap; }
+  header h1 { font-size: 15px; margin: 0 8px 0 0; font-weight: 600; }
+  header form { display: flex; gap: 6px; }
+  input[type=text] { font: inherit; padding: 6px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--ink); min-width: 220px; }
+  button { font: inherit; padding: 6px 12px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel); color: var(--ink); cursor: pointer; }
+  button:hover { border-color: var(--muted); }
+  button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  button.keep { background: var(--keep); border-color: var(--keep); color: #fff; }
+  button.reject { background: var(--reject); border-color: var(--reject); color: #fff; }
+  .spacer { flex: 1; }
+  .stat { color: var(--muted); font-size: 13px; }
+  main { display: grid; grid-template-columns: minmax(280px, 1fr) 320px; gap: 24px; padding: 20px 24px; min-height: 0; overflow: auto; }
+  .stage { display: flex; justify-content: center; align-items: center; min-height: 0; }
+  .side { display: flex; flex-direction: column; gap: 14px; }
+  .side h2 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin: 0; }
+  .actions { display: flex; gap: 8px; }
+  .actions button { flex: 1; padding: 10px; font-weight: 600; }
+  .swatches { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+  .swatch { aspect-ratio: 1; border-radius: 8px; border: 1px solid var(--line); position: relative; }
+  .swatch span { position: absolute; left: 4px; bottom: 3px; font-size: 10px; color: #fff; mix-blend-mode: difference; }
+  .meta { font-size: 13px; color: var(--muted); line-height: 1.5; }
+  .meta b { color: var(--ink); font-weight: 600; }
+  kbd { font: 11px ui-monospace, monospace; padding: 1px 5px; border: 1px solid var(--line); border-radius: 4px; background: var(--bg); }
+  .actions kbd { background: rgb(255 255 255 / 0.18); border-color: rgb(255 255 255 / 0.35); color: inherit; }
+  #btnSkip kbd { background: var(--bg); border-color: var(--line); }
+  .empty { color: var(--muted); text-align: center; padding: 60px 20px; }
+
+  /* the phone */
+  .phone { width: 390px; height: 844px; border-radius: 44px; overflow: hidden; position: relative; box-shadow: 0 20px 60px rgb(0 0 0 / 0.25); transform-origin: top center; background: #888; }
+  .phone .photo { position: absolute; inset: 0; background-size: cover; background-position: center; }
+  .phone .wash { position: absolute; inset: 0; }
+  .phone .wordmark { position: absolute; left: 20px; font-family: -apple-system, "SF Pro Display", system-ui, sans-serif; font-weight: 800; font-size: 128px; letter-spacing: -0.06em; line-height: 1; white-space: nowrap; }
+  .phone .memo { top: 163px; }
+  .phone .daddy { top: 270px; }
+  .phone .tuner { position: absolute; left: 24px; top: 404px; font-size: 21px; font-weight: 600; letter-spacing: -0.01em; }
+  .phone .ring { position: absolute; left: 50%; bottom: 128px; width: 92px; height: 92px; margin-left: -46px; border-radius: 50%; border: 4px solid; display: grid; place-items: center; }
+  .phone .fill { width: 70px; height: 70px; border-radius: 50%; }
+  .phone .credit { position: absolute; right: 20px; bottom: 96px; font-size: 11px; font-weight: 500; letter-spacing: 0.02em; opacity: 0.22; mask-image: linear-gradient(#000 0 45%, rgb(0 0 0 / 0.35)); -webkit-mask-image: linear-gradient(#000 0 45%, rgb(0 0 0 / 0.35)); }
+  .phone .nav { position: absolute; left: 0; right: 0; bottom: 34px; height: 44px; display: flex; align-items: center; font-size: 20px; font-weight: 600; letter-spacing: -0.01em; }
+  .phone .nav span { position: absolute; }
+  .phone .nav .dot { width: 5px; height: 5px; border-radius: 50%; top: 38px; left: 66px; }
+  .phone .status { position: absolute; top: 18px; left: 52px; font-size: 16px; font-weight: 600; }
+
+  footer { border-top: 1px solid var(--line); background: var(--panel); padding: 10px 16px; display: grid; grid-template-rows: auto auto; gap: 8px; }
+  .strip-head { display: flex; align-items: baseline; gap: 10px; font-size: 13px; color: var(--muted); }
+  .strip-head b { color: var(--ink); }
+  .strip[hidden] { display: none; }
+  .strip { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 6px; min-height: 96px; }
+  .thumb { flex: none; width: 42px; height: 90px; border-radius: 6px; background-size: cover; background-position: center; cursor: pointer; border: 2px solid transparent; position: relative; }
+  .thumb.current { border-color: var(--accent); }
+  .thumb.kept::after { content: ""; position: absolute; right: 2px; top: 2px; width: 8px; height: 8px; border-radius: 50%; background: var(--keep); }
+  .thumb.rejected { opacity: 0.35; }
+  .thumb.dragging { opacity: 0.4; }
+  .thumb.over { border-color: var(--keep); }
+</style>
+</head>
+<body>
+<header>
+  <h1>Daily curation</h1>
+  <form id="search"><input id="q" type="text" placeholder="search Unsplash, or collection:12345" autocomplete="off"><button class="primary" type="submit">Find</button></form>
+  <button id="loadSources" title="every query and collection in sources.json">Load sources.json</button>
+  <button id="reviewKept" title="step through what's already kept">Review kept</button>
+  <span class="spacer"></span>
+  <span class="stat" id="rate"></span>
+</header>
+<main>
+  <div class="stage"><div id="phone" class="phone"></div></div>
+  <aside class="side">
+    <h2>This photo</h2>
+    <div class="meta" id="meta"></div>
+    <div class="actions">
+      <button class="reject" id="btnReject">Reject <kbd>←</kbd></button>
+      <button id="btnSkip">Skip <kbd>space</kbd></button>
+      <button class="keep" id="btnKeep">Keep <kbd>→</kbd></button>
+    </div>
+    <h2>Palette the app will derive</h2>
+    <div class="swatches" id="swatches"></div>
+    <div class="meta" id="paletteMeta"></div>
+    <div class="meta">Keys: <kbd>→</kbd>/<kbd>K</kbd> keep · <kbd>←</kbd>/<kbd>X</kbd> reject · <kbd>space</kbd> skip · <kbd>⌫</kbd> undo the last decision · <kbd>U</kbd> unkeep the shown photo</div>
+  </aside>
+</main>
+<footer>
+  <div class="strip-head"><b id="keptCount"></b> <span>kept, in day order — drag to reorder, click to view</span> <span class="spacer"></span> <span id="queueCount"></span></div>
+  <div class="strip" id="kept"></div>
+  <div class="strip" id="queue" style="min-height:0" hidden></div>
+</footer>
+<script type="module" src="app.js"></script>
+</body>
+</html>

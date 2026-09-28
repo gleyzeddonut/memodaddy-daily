@@ -18,7 +18,7 @@ structural changes.
 
 | Repo | Visibility | Role |
 |---|---|---|
-| `github.com/gleyzeddonut/memodaddy-daily` (this one, clone at `~/Documents/CLAUDE/memodaddy-daily`) | public | Curation. `sources.json` → `scripts/pull-unsplash.mjs` → `manifest.json`. Pushing `main` changes every phone's rotation, no app release. |
+| `github.com/gleyzeddonut/memodaddy-daily` (this one, clone at `~/Documents/CLAUDE/memodaddy-daily`) | public | Curation. `npm run curate` (browser page) → `picks.json` → `manifest.json`. Pushing `main` changes every phone's rotation, no app release. |
 | `github.com/gleyzeddonut/mumo` (clone at `~/Documents/CLAUDE/mumo`) | private | The app. Reads the manifest, shows the photo and credit, pings Unsplash. |
 
 ## Data flow, one phone, one day
@@ -73,29 +73,33 @@ Only iOS. The Mac theme picker hides Daily (`AppTheme.macCases`).
 
 ## Curation workflow
 
+`picks.json` is the source of truth: `kept` = full entries in rotation
+order, `rejected` = ids that must not come back. `manifest.json` = the
+hand-added entries already in it + `kept`, rebuilt by every curation
+decision and by `npm run build`.
+
 ```sh
 cd ~/Documents/CLAUDE/memodaddy-daily
-# once: put the Unsplash Access Key in .env (gitignored):
-#   UNSPLASH_ACCESS_KEY=…
-npm run pull                     # rewrites manifest.json (add --dry-run to preview)
-git commit -am "Refresh rotation" && git push
+npm run curate        # node scripts/curate.mjs → http://localhost:4747 (binds 127.0.0.1)
+git commit -am "Curate rotation" && git push
 ```
 
-`sources.json`:
-- `collections`: Unsplash collection ids from Dan's account
-  (`unsplash.com/collections/<id>/…`). Empty as of Sep 28.
-- `queries`: search terms, used while there are no collections. Six
-  mood queries today.
-- `perSource` (20) and `maxImages` (120) cap the pull.
-- Sources are interleaved round-robin so consecutive days differ in mood.
+The page (`curate/index.html`, `curate/app.js`) renders each candidate in
+a 390×844 mock of the front page using the app's layout numbers (wordmark
+at 150/257 left 20, tuner link at 392, ring bottom edge 128 up, credit
+right 20 / bottom 96 at 22%, nav row 34–78) and the palette from
+`curate/palette.js`, a line-for-line port of `DailyColors.extract` and
+`Theme.daily(from:)`. **If the Swift changes, change palette.js too** —
+that port is what makes the mock honest. Image bytes go through the
+server's `/img` proxy (hosts: images.unsplash.com, raw.githubusercontent
+.com) so the canvas can read pixels. The Unsplash key never reaches the
+page; the server makes the API calls (`/api/search?q=…|collection=…`).
+POST `/api/keep|reject|clear|order` write picks and rebuild the manifest.
 
-A pull is ~1 API request per 30 photos. The key is Dan's demo-tier key:
-**50 requests/hour**, shared by the script and every phone's ping.
-
-Hand-added images: portrait JPEG ~1200×2600 into `images/`, entry with a
-raw.githubusercontent URL, keep the middle third quiet (wordmark and
-tuner link sit there; record button and nav sit over the bottom). See
-README.md.
+`sources.json` is now just a list the **Load sources.json** button can
+queue (queries and collection ids); it no longer feeds the manifest by
+itself. There is no automatic pull any more: nothing enters the rotation
+without a keep.
 
 ## Unsplash terms this must keep satisfying
 
@@ -172,11 +176,11 @@ succeeds, which is fine once main matches.
 
 ## Known gaps / likely next asks
 
-- **No exclude list.** A bad photo removed from the manifest by hand
-  comes back on the next pull. Add `"exclude": ["unsplash-…"]` to
-  `sources.json` and filter in the script.
-- **No collections yet.** Dan intends to curate Unsplash collections;
-  when he does, add their ids and shrink or drop `queries`.
+- **Sep 28 (later):** curation page added; `picks.json` replaces the
+  automatic pull, rejects are remembered. The 119 photos from the first
+  pull were seeded as kept, unreviewed — Dan meant to go through them.
+- **No collections yet.** `collection:<id>` in the search box works once
+  Dan has some.
 - **Production approval** on Unsplash when user numbers grow.
 - **Artists.** Their images are hand-added entries (`images/` + manifest)
   or, if hosted elsewhere, any HTTPS URL; add a `credit` with
@@ -198,3 +202,5 @@ succeeds, which is fine once main matches.
   manifest scaffold.
 - Sep 28: Unsplash feed (pull script, credit + ping in the app), first
   120-entry rotation pushed. mumo `42324e9`, memodaddy-daily `d554cf9`.
+- Sep 28, later: photo-matched palette in the app (mumo `97ccda4`), then
+  the curation page here replacing the pull script.

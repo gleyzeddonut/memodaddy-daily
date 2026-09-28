@@ -5,27 +5,35 @@ The curated photo set behind the app's **Daily** theme. The app fetches
 and caches each image on the phone. Pushing to `main` is all it takes to
 change the rotation — no app update.
 
-## Unsplash rotation (the usual way)
-
-Most of the rotation comes from Unsplash. Edit `sources.json`: add the ids of
-collections you curate on your Unsplash account (the number in
-`unsplash.com/collections/<id>/…`) and/or search queries for moods. Then:
+## Curating the rotation (the usual way)
 
 ```sh
-echo 'UNSPLASH_ACCESS_KEY=…' > .env   # the app's public Access Key; .env is gitignored
-npm run pull                          # rewrites manifest.json
-git commit -am "Refresh rotation" && git push
+echo 'UNSPLASH_ACCESS_KEY=…' > .env   # once; the app's public Access Key, gitignored
+npm run curate                        # opens http://localhost:4747
 ```
 
-Sources are interleaved so consecutive days come from different moods;
-`perSource` and `maxImages` cap the pull. Every Unsplash entry carries a
-`credit` (name, profile link with the utm tags Unsplash asks for, and the
-download-tracking URL the app pings when it shows the photo) so the app
-meets the API terms. The key is a demo-tier one (50 requests/hour); a full
-pull is about one request per 30 photos.
+The page shows each candidate inside a mock of the app's front page,
+dressed in the palette the app will derive from it (same colour maths as
+the app, light or dark scheme included). Search Unsplash in the box, or
+type `collection:<id>` for one of your collections, or press **Load
+sources.json** to queue every query and collection listed there. Then:
 
-Rerunning reorders the Unsplash part of the list, which shifts days; that's
-fine. Hand-added entries below stay in front, in their order.
+- `→` / `K` keep · `←` / `X` reject · `space` skip · `⌫` undo · `U` unkeep
+- **Review kept** steps through what's already in the rotation.
+- The strip at the bottom is the rotation in day order: drag to reorder,
+  click to view.
+
+Every decision writes `picks.json` and rebuilds `manifest.json` on the
+spot, so when you're done it's just:
+
+```sh
+git commit -am "Curate rotation" && git push
+```
+
+Rejected photos never come back in later searches. `npm run build`
+rebuilds the manifest from `picks.json` if you edit that file by hand.
+The key is a demo-tier one (50 API requests/hour); a search page is one
+request, and the counter is in the page header.
 
 ## Adding an image by hand
 
