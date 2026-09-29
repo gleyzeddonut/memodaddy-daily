@@ -234,13 +234,22 @@ function shuffled(list) {
   for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
   return a;
 }
-/// Shuffle within each library, then round-robin across libraries, so a
-/// run of newly kept prints spreads through the year instead of sitting
-/// at the end. Pure; exposed for testing.
+/// Shuffle within each library, then spread every library evenly over the
+/// whole rotation (13 prints among 121 photos land every ~9 days, not
+/// all in the first fortnight as round-robin would). Pure; exposed for
+/// testing.
 function mixedOrder(kept) {
   const bySource = {};
   for (const e of kept) (bySource[sourceOf(e)] ??= []).push(e);
-  return interleave(Object.values(bySource).map(shuffled)).map((e) => e.id);
+  const placed = [];
+  for (const list of Object.values(bySource)) {
+    const items = shuffled(list);
+    // fractional slot in [0, 1): the k-th of n sits at (k + 0.5) / n, with a
+    // small per-library jitter so different libraries don't collide.
+    const jitter = Math.random() * 0.5 / Math.max(items.length, 1);
+    items.forEach((e, k) => placed.push({ id: e.id, at: (k + 0.5) / items.length + jitter }));
+  }
+  return placed.sort((a, b) => a.at - b.at).map((p) => p.id);
 }
 window.mixedOrder = mixedOrder;
 
