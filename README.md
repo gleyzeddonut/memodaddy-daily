@@ -24,7 +24,13 @@ the app, light or dark scheme included). The search box takes:
 - `met: carp dept:6` → the Met's open-access works (no key; its search
   is loose, `dept:N` narrows it — 6 Asian Art, 9 Drawings and Prints)
 
-or press **Load sources.json** to queue every query listed there. Museum
+or pick a library in the dropdown and press **Browse** (or just pick it:
+that browses straight away) to see its pictures with no keywords at all —
+Unsplash random portraits, a random sample of the Art Institute's
+prints, paintings and drawings, a random sample of the Met's Asian Art
+and Drawings & Prints. **More** loads another batch. "All sources"
+interleaves the three so you can compare their character. Or press
+**Load sources.json** to queue every query listed there. Museum
 pieces are credited "Artist · Library" in the app, both linked; only
 portrait or square works are offered. Then:
 

@@ -63,6 +63,38 @@ export const SOURCES = {
       }
       return { entries, more: page < (d.pagination?.total_pages ?? 1) };
     },
+    /// Keyword-less browsing: a random sample of public-domain works in
+    /// the "made picture" classes (prints, paintings, drawings, posters,
+    /// textiles, watercolours); a different seed per page.
+    async browse(page, perPage) {
+      const body = {
+        query: { function_score: {
+          query: { bool: { filter: [
+            { term: { is_public_domain: true } }, { exists: { field: "image_id" } },
+            { terms: { classification_title: ["print", "woodblock print", "painting", "drawing", "poster", "textile", "watercolor", "screenprint", "lithograph", "etching"] } },
+          ] } },
+          random_score: { seed: 1000 + page * 7919 }, boost_mode: "replace",
+        } },
+        fields: ["id", "title", "artist_title", "date_display", "image_id", "thumbnail", "classification_title"],
+        limit: perPage * 2, page: 1,
+      };
+      const res = await fetch("https://api.artic.edu/api/v1/artworks/search", {
+        method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body),
+      });
+      if (!res.ok) throw new Error(`AIC HTTP ${res.status}`);
+      const d = await res.json();
+      const iiif = d.config?.iiif_url ?? "https://www.artic.edu/iiif/2";
+      const entries = d.data.filter((a) => a.image_id && !(a.thumbnail?.width && a.thumbnail?.height && a.thumbnail.height < a.thumbnail.width))
+        .slice(0, perPage).map((a) => ({
+          id: `aic-${a.id}`,
+          url: `${iiif}/${a.image_id}/${phoneRegion(a.thumbnail?.width, a.thumbnail?.height)}/!1290,2796/0/default.jpg`,
+          title: a.title,
+          detail: [a.date_display, a.classification_title].filter(Boolean).join(" · "),
+          credit: { source: "aic", sourceName: "Art Institute of Chicago", name: a.artist_title || "Unknown artist",
+                    link: `https://www.artic.edu/artworks/${a.id}`, sourceLink: "https://www.artic.edu" },
+        }));
+      return { entries, more: true };
+    },
   },
 
   // The Met — free, no key, open-access originals (big files; the app
@@ -106,6 +138,35 @@ export const SOURCES = {
         });
       }
       return { entries, more: page * perPage < ids.length };
+    },
+    /// Keyword-less browsing: the Met's search can't list, so sample
+    /// random object ids from Asian Art (6) and Drawings and Prints (9)
+    /// and keep the public-domain, portrait ones with an image. Slow-ish
+    /// (one request per object) and the hit rate is maybe a third.
+    async browse(page, perPage) {
+      if (!this._ids) {
+        const r = await fetch("https://collectionapi.metmuseum.org/public/collection/v1/objects?departmentIds=6|9");
+        if (!r.ok) throw new Error(`Met HTTP ${r.status}`);
+        this._ids = (await r.json()).objectIDs ?? [];
+      }
+      const entries = [];
+      let tries = 0;
+      while (entries.length < perPage && tries < perPage * 3 && this._ids.length) {
+        tries++;
+        const id = this._ids[Math.floor(Math.random() * this._ids.length)];
+        let o;
+        try { o = await (await fetch(`https://collectionapi.metmuseum.org/public/collection/v1/objects/${id}`)).json(); } catch { continue; }
+        if (!o?.primaryImage || !o.isPublicDomain) continue;
+        const m = (o.measurements ?? [])[0]?.elementMeasurements;
+        if (m && m.Width && m.Height && m.Height < m.Width) continue;
+        entries.push({
+          id: `met-${o.objectID}`, url: o.primaryImage, title: o.title,
+          detail: [o.objectDate, o.classification].filter(Boolean).join(" · "),
+          credit: { source: "met", sourceName: "The Met", name: o.artistDisplayName || "Unknown artist",
+                    link: o.objectURL, sourceLink: "https://www.metmuseum.org" },
+        });
+      }
+      return { entries, more: true };
     },
   },
 };

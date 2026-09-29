@@ -15,7 +15,7 @@ import path from "node:path";
 import { spawn } from "node:child_process";
 import {
   root, sourcesPath, PER_PAGE, loadDotEnv, readJSON, writeJSON, picksPath,
-  readPicks, buildManifest, fetchPage, isUnsplash, ApiError,
+  readPicks, buildManifest, fetchPage, isUnsplash, ApiError, api, entry,
 } from "./lib.mjs";
 import { SOURCES, parseTerm, isCurated } from "./sources.mjs";
 
@@ -100,6 +100,27 @@ async function handle(req, res) {
         candidates = r.entries; more = r.more;
       }
       return send(res, 200, { source: parsed.source, candidates: candidates.map((e) => ({ ...e, status: statusOf(e.id) })), more, rateRemaining });
+    } catch (err) {
+      return send(res, err instanceof ApiError ? err.status : 500, { error: err.message });
+    }
+  }
+
+  // Keyword-less browsing of one library: /api/browse?source=aic|met|unsplash&page=N
+  if (p === "/api/browse") {
+    const source = url.searchParams.get("source") ?? "unsplash";
+    const page = Number(url.searchParams.get("page") ?? "1");
+    try {
+      let entries, more = true;
+      if (source === "unsplash") {
+        const { body, remaining } = await api("/photos/random", { count: PER_PAGE, orientation: "portrait", content_filter: "high" }, key);
+        rateRemaining = remaining;
+        entries = body.filter((ph) => ph.height > ph.width * 1.2).map(entry);
+      } else if (SOURCES[source]?.browse) {
+        ({ entries, more } = await SOURCES[source].browse(page, PER_PAGE));
+      } else {
+        return send(res, 400, { error: "unknown source" });
+      }
+      return send(res, 200, { source, candidates: entries.map((e) => ({ ...e, status: statusOf(e.id) })), more, rateRemaining });
     } catch (err) {
       return send(res, err instanceof ApiError ? err.status : 500, { error: err.message });
     }

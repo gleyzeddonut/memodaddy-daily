@@ -110,6 +110,16 @@ and Openverse would need free API keys and are not wired yet. AIC has
 only one public-domain Ohara Koson with an image; Hasui isn't marked
 public domain there — Hokusai/Hiroshige/Harunobu are plentiful.
 
+**Browse (no keywords)**: `/api/browse?source=unsplash|aic|met&page=N`
+— Unsplash `/photos/random` (30 portrait); AIC `function_score` /
+`random_score` (seed per page) over public-domain works in print/
+painting/drawing/poster/textile/watercolour classes; the Met samples
+random ids from `/objects?departmentIds=6|9` (cached in the adapter)
+and keeps public-domain portrait ones with an image (~1/3 hit rate, one
+request each, so slow). The page browses when the source picker
+changes, **Browse** reloads, **More** appends. Dan asked for this
+because he wanted to see each library's character without keywords.
+
 `sources.json` is now just a list the **Load sources.json** button can
 queue (queries and collection ids); it no longer feeds the manifest by
 itself. There is no automatic pull any more: nothing enters the rotation

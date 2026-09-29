@@ -326,11 +326,44 @@ $("loadSources").onclick = async () => {
   } catch (err) { alert(err.message); }
 };
 
+// ---- keyword-less browsing per library
+
+let browsePage = 0;
+async function browseOnce(source, page) {
+  const res = await api(`/api/browse?source=${source}&page=${page}`);
+  if (res.rateRemaining != null) state.rateRemaining = res.rateRemaining;
+  return res.candidates;
+}
+async function browse(append = false) {
+  const sel = selectedSource();
+  browsePage = append ? browsePage + 1 : 1;
+  const sources = sel === "all" ? ["unsplash", "aic", "met"] : [sel];
+  $("browse").disabled = true; $("browseMore").disabled = true;
+  $("queueNote").textContent = `loading ${sources.map((k) => SOURCE_BADGE[k]).join(" · ")}…`;
+  try {
+    const results = await Promise.allSettled(sources.map((k) => browseOnce(k, browsePage)));
+    const lists = results.map((r) => (r.status === "fulfilled" ? r.value : []));
+    const failed = sources.filter((_, i) => results[i].status === "rejected");
+    const fresh = interleave(lists).filter((e) => e.status === "new");
+    const title = `browsing ${sel === "all" ? "all sources" : SOURCE_BADGE[sel]}${failed.length ? ` (${failed.join(", ")} failed)` : ""}`;
+    if (append) {
+      const seen = new Set(queue.map((e) => e.id));
+      const start = queue.length;
+      setQueue([...queue, ...fresh.filter((e) => !seen.has(e.id))], start, false, title);
+    } else {
+      setQueue(dedupe(fresh), 0, false, title);
+    }
+  } catch (err) { alert(err.message); }
+  $("browse").disabled = false; $("browseMore").disabled = false;
+}
+$("browse").onclick = () => browse(false);
+$("browseMore").onclick = () => browse(true);
+
 $("reviewKept").onclick = () => {
   const sel = selectedSource();
   setQueue(sel === "all" ? [...state.kept] : state.kept.filter((e) => sourceOf(e) === sel), 0, true);
 };
-$("source").onchange = () => { renderKept(); renderCounts(); };
+$("source").onchange = () => { renderKept(); renderCounts(); browse(false); };
 
 $("btnKeep").onclick = () => decide("keep");
 $("btnReject").onclick = () => decide("reject");
