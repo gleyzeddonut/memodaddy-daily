@@ -135,7 +135,9 @@
     <button id="spread" class="small" title="slot the picks kept since the last shuffle or spread evenly into the existing order, leaving everything else where it is">Spread new picks</button>
     <span class="spacer"></span> <span id="queueCount"></span></div>
   <div class="strip" id="kept"></div>
-  <div class="strip-head" id="pinsRow"><b>pinned days</b> <span id="pinsList">none yet</span></div>
+  <div class="strip-head" id="pinsRow"><b>pinned days</b>
+    <button id="autoHolidays" class="small" title="for every holiday in holidays.json without a pin, search its sources and pin a random match (one Unsplash call per holiday)">Auto-pin holidays</button>
+    <span id="pinsList">none yet</span></div>
   <div class="strip-head"><b id="queueLabel">results</b> <span id="queueNote">search above, or load sources.json</span></div>
   <div class="strip" id="queue"></div>
 </footer>

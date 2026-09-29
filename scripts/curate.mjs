@@ -18,6 +18,7 @@ import {
   readPicks, buildManifest, fetchPage, isUnsplash, ApiError, api, entry,
 } from "./lib.mjs";
 import { SOURCES, parseTerm, isCurated } from "./sources.mjs";
+import { resolveDates } from "./holidays.mjs";
 
 const PORT = Number(process.env.PORT ?? 4747);
 const key = await loadDotEnv();
@@ -107,6 +108,11 @@ async function handle(req, res) {
     }
   }
 
+  // Holidays: the list with concrete dates and whether each is pinned.
+  if (p === "/api/holidays") {
+    return send(res, 200, { holidays: await holidayDates() });
+  }
+
   // Keyword-less browsing of one library: /api/browse?source=aic|met|unsplash&page=N
   if (p === "/api/browse") {
     const source = url.searchParams.get("source") ?? "unsplash";
@@ -165,6 +171,23 @@ async function handle(req, res) {
         picks.pins.sort((a, b) => a.date.slice(-5).localeCompare(b.date.slice(-5)) || a.date.localeCompare(b.date));
         break;
       }
+      case "/api/holidays/auto": {
+        // Pin a random matching picture for every holiday date without a
+        // pin (or just `body.date`, replacing its pin: the re-roll).
+        const wanted = await holidayDates();
+        const targets = wanted.filter((h) => body.date ? h.date === body.date : !h.pinned);
+        const report = [];
+        for (const h of targets) {
+          const chosen = await pickForHoliday(h, body.date ? picks.pins.find((p) => p.date === h.date)?.image?.id : null);
+          if (!chosen) { report.push({ date: h.date, name: h.name, picked: null }); continue; }
+          picks.pins = picks.pins.filter((p) => p.date !== h.date);
+          picks.pins.push({ date: h.date, holiday: h.name, query: h.query, image: chosen });
+          report.push({ date: h.date, name: h.name, picked: chosen.credit?.name, from: chosen.id.split("-")[0] });
+        }
+        picks.pins.sort((a, b) => a.date.slice(-5).localeCompare(b.date.slice(-5)) || a.date.localeCompare(b.date));
+        await save();
+        return send(res, 200, { ...(await state()), report, rateRemaining });
+      }
       case "/api/unpin":
         picks.pins = picks.pins.filter((p) => p.date !== body.date);
         break;
@@ -195,6 +218,41 @@ async function handle(req, res) {
   } catch {
     send(res, 404, { error: "not found" });
   }
+}
+
+/// holidays.json expanded to concrete dates for this year and next.
+async function holidayDates() {
+  const { holidays = [] } = await readJSON(path.join(root, "holidays.json"), {});
+  const y = new Date().getFullYear();
+  const out = [];
+  for (const h of holidays) {
+    for (const date of resolveDates(h.date, [y, y + 1])) {
+      out.push({ name: h.name, date, query: h.query, sources: h.sources ?? ["ill", "aic"], pinned: picks.pins.some((p) => p.date === date) });
+    }
+  }
+  return out;
+}
+
+/// One random portrait candidate for a holiday from its sources, skipping
+/// rejected ids, ids already pinned elsewhere, and `avoidID`.
+async function pickForHoliday(h, avoidID) {
+  const taken = new Set([...picks.rejected, ...picks.pins.map((p) => p.image.id), avoidID].filter(Boolean));
+  const pool = [];
+  for (const src of h.sources) {
+    try {
+      let entries;
+      if (src === "unsplash") {
+        const r = await fetchPage({ query: h.query }, 1, key, PER_PAGE); rateRemaining = r.remaining; entries = r.photos;
+      } else if (SOURCES[src]) {
+        const r = await SOURCES[src].page(h.query, 1, PER_PAGE, { api, entry, key }); entries = r.entries;
+        if (src === "ill") rateRemaining = Math.max(0, (rateRemaining ?? 50) - 1);
+      } else continue;
+      pool.push(...entries.filter((e) => !taken.has(e.id)));
+    } catch (err) {
+      console.warn(`holiday ${h.name}: ${src} failed: ${err.message}`);
+    }
+  }
+  return pool.length ? pool[Math.floor(Math.random() * pool.length)] : null;
 }
 
 const server = http.createServer((req, res) => {

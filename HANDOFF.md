@@ -137,6 +137,17 @@ builder. The app (mumo ≥ the pins commit, i.e. build 37+) shows the
 pinned picture on that day instead of the rotation. Page: "Pin to a
 day" in the side panel, "pinned days" chips above the results row.
 
+**Holidays** (Sep 28, late night): `holidays.json` (name, date rule,
+query, optional sources) + `scripts/holidays.mjs` (`resolveDates`:
+fixed MM-DD stays yearly; `easter[+N]`, `Nth-weekday-MM`,
+`last-weekday-MM` become YYYY-MM-DD for this year and next; Gregorian
+Easter algorithm, verified for 2026/27). `GET /api/holidays` lists them
+with pinned flags; `POST /api/holidays/auto {}` pins a random portrait
+match for every unpinned date, `{date}` re-rolls one (skips rejected
+ids, other pins, and the current pick); pins carry `holiday` and
+`query`. Tested on a throwaway copy of the repo, never against Dan's
+running server (it holds picks in memory and writes picks.json).
+
 `sources.json` is now just a list the **Load sources.json** button can
 queue (queries and collection ids); it no longer feeds the manifest by
 itself. There is no automatic pull any more: nothing enters the rotation

@@ -54,6 +54,15 @@ kept. Pinned days are listed above the results row (click to view, × to
 unpin). One picture per date. Needs the app from build 37 on; older
 builds ignore pins.
 
+**Auto-pin holidays**: `holidays.json` lists holidays with a date (fixed
+`MM-DD`, or a rule like `easter`, `2nd-sunday-05`, `last-monday-05`,
+`4th-thursday-11`, resolved for this year and next) and a search
+`query`. The button above the pinned days searches each unpinned
+holiday's sources (illustrations and the Art Institute by default; edit
+`sources` per holiday) and pins a random match. Each holiday chip has a
+↻ that re-rolls just that one. One Unsplash call per holiday, so a full
+run costs ~27 of the key's 50 per hour.
+
 Every decision writes `picks.json` and rebuilds `manifest.json` on the
 spot, so when you're done it's just:
 

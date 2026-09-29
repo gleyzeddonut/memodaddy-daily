@@ -68,9 +68,15 @@ function renderPins() {
   for (const p of pins) {
     const chip = document.createElement("span");
     chip.className = "pin";
-    chip.innerHTML = `<b>${p.date}</b> ${p.image.credit?.name ?? p.image.id}`;
+    chip.innerHTML = `<b>${p.date}</b> ${p.holiday ? `${p.holiday}: ` : ""}${p.image.credit?.name ?? p.image.id}`;
     chip.title = `${creditLine(p.image.credit)} — click to view`;
     chip.onclick = () => { shown = p.image; show(p.image); $("pinDate").value = p.date; };
+    if (p.holiday) {
+      const r = document.createElement("span");
+      r.className = "x"; r.style.color = "var(--accent)"; r.textContent = "↻"; r.title = `re-roll ${p.holiday}: another random match`;
+      r.onclick = async (ev) => { ev.stopPropagation(); r.textContent = "…"; try { applyState(await api("/api/holidays/auto", { date: p.date })); } catch (err) { alert(err.message); } };
+      chip.appendChild(r);
+    }
     const x = document.createElement("span");
     x.className = "x"; x.textContent = "×"; x.title = `unpin ${p.date}`;
     x.onclick = async (ev) => { ev.stopPropagation(); applyState(await api("/api/unpin", { date: p.date })); };
@@ -78,6 +84,17 @@ function renderPins() {
     el.appendChild(chip);
   }
 }
+$("autoHolidays").onclick = async () => {
+  const b = $("autoHolidays"); b.disabled = true; const label = b.textContent; b.textContent = "pinning…";
+  try {
+    const s = await api("/api/holidays/auto", {});
+    applyState(s);
+    const done = s.report.filter((r) => r.picked), missed = s.report.filter((r) => !r.picked);
+    b.textContent = `${done.length} pinned${missed.length ? `, ${missed.length} found nothing (${missed.map((m) => m.name).join(", ")})` : ""}`;
+    setTimeout(() => { b.textContent = label; }, 6000);
+  } catch (err) { alert(err.message); b.textContent = label; }
+  b.disabled = false;
+};
 $("btnPin").onclick = async () => {
   if (!shown) return alert("show a picture first");
   const date = $("pinDate").value.trim();
