@@ -1,5 +1,5 @@
 {
-  "_comment": "Holidays the curation page can auto-pin. `date` is MM-DD (every year) or a rule: easter, easter+N, nth-weekday (e.g. 2nd-sunday-05), last-weekday (last-monday-05), or `table` with a `dates` map of year → MM-DD for calendars we don't compute (Hebrew). Extend the tables past 2030 when the time comes. `query` is what gets searched (by default just the holiday's name — keep it simple, the libraries match names well); `sources` defaults to [\"ill\", \"aic\"] (one Unsplash call per holiday — the key allows 50 an hour).",
+  "_comment": "Holidays the curation page can auto-pin. `date` is MM-DD (every year) or a rule: easter, easter+N, nth-weekday (e.g. 2nd-sunday-05), last-weekday (last-monday-05), or `table` with a `dates` map of year → MM-DD for calendars we don't compute (Hebrew). Extend the tables past 2030 when the time comes. `query` is what gets searched — a string, or a list of phrases whose results are pooled (use a list when the name alone finds too little); `sources` defaults to [\"ill\", \"aic\"] (one Unsplash call per holiday — the key allows 50 an hour).",
   "holidays": [
     {
       "name": "New Year's Day",
@@ -53,7 +53,10 @@
     {
       "name": "Juneteenth",
       "date": "06-19",
-      "query": "Juneteenth"
+      "query": [
+        "Juneteenth",
+        "freedom celebration"
+      ]
     },
     {
       "name": "Summer solstice",
@@ -95,7 +98,18 @@
     {
       "name": "Day of the Dead",
       "date": "11-02",
-      "query": "Day of the Dead"
+      "query": [
+        "Day of the Dead",
+        "Día de los Muertos",
+        "sugar skull",
+        "calavera",
+        "marigold altar"
+      ],
+      "sources": [
+        "ill",
+        "unsplash",
+        "aic"
+      ]
     },
     {
       "name": "Thanksgiving",
@@ -112,7 +126,10 @@
         "2029": "12-02",
         "2030": "12-21"
       },
-      "query": "Hanukkah",
+      "query": [
+        "Hanukkah",
+        "menorah"
+      ],
       "_note": "first full day; the festival begins at sundown the evening before"
     },
     {
@@ -137,7 +154,10 @@
     {
       "name": "Kwanzaa",
       "date": "12-26",
-      "query": "Kwanzaa"
+      "query": [
+        "Kwanzaa",
+        "kinara"
+      ]
     },
     {
       "name": "New Year's Eve",

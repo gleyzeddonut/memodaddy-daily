@@ -181,7 +181,7 @@ async function handle(req, res) {
           const { chosen, reason } = await pickForHoliday(h, body.date ? picks.pins.find((p) => p.date === h.date)?.image?.id : null);
           if (!chosen) { report.push({ date: h.date, name: h.name, picked: null, reason }); continue; }
           picks.pins = picks.pins.filter((p) => p.date !== h.date);
-          picks.pins.push({ date: h.date, holiday: h.name, query: h.query, image: chosen });
+          picks.pins.push({ date: h.date, holiday: h.name, query: queriesOf(h).join(" | "), image: chosen });
           report.push({ date: h.date, name: h.name, picked: chosen.credit?.name, from: chosen.id.split("-")[0] });
         }
         picks.pins.sort((a, b) => a.date.slice(-5).localeCompare(b.date.slice(-5)) || a.date.localeCompare(b.date));
@@ -239,24 +239,29 @@ async function holidayDates() {
 /// around when the libraries have nothing else.
 const holidayPools = new Map();
 
+/// A holiday's `query` may be one phrase or several; results are pooled.
+const queriesOf = (h) => (Array.isArray(h.query) ? h.query : [h.query]).filter(Boolean);
+
 async function fetchHolidayPage(h, page) {
   const found = [];
   const problems = [];
   let more = false;
-  for (const src of h.sources) {
-    try {
-      let entries, srcMore = false;
-      if (src === "unsplash") {
-        const r = await fetchPage({ query: h.query }, page, key, PER_PAGE); rateRemaining = r.remaining; entries = r.photos; srcMore = r.more;
-      } else if (SOURCES[src]) {
-        const r = await SOURCES[src].page(h.query, page, PER_PAGE, { api, entry, key }); entries = r.entries; srcMore = r.more;
-        if (r.remaining != null) rateRemaining = r.remaining;
-      } else continue;
-      found.push(...entries);
-      more ||= srcMore;
-    } catch (err) {
-      problems.push(`${src}: ${err.message}`);
-      console.warn(`holiday ${h.name}: ${src} failed: ${err.message}`);
+  for (const q of queriesOf(h)) {
+    for (const src of h.sources) {
+      try {
+        let entries, srcMore = false;
+        if (src === "unsplash") {
+          const r = await fetchPage({ query: q }, page, key, PER_PAGE); rateRemaining = r.remaining; entries = r.photos; srcMore = r.more;
+        } else if (SOURCES[src]) {
+          const r = await SOURCES[src].page(q, page, PER_PAGE, { api, entry, key }); entries = r.entries; srcMore = r.more;
+          if (r.remaining != null) rateRemaining = r.remaining;
+        } else continue;
+        found.push(...entries);
+        more ||= srcMore;
+      } catch (err) {
+        problems.push(`${src} "${q}": ${err.message}`);
+        console.warn(`holiday ${h.name}: ${src} "${q}" failed: ${err.message}`);
+      }
     }
   }
   return { found, more, problems };
@@ -268,7 +273,8 @@ async function fetchHolidayPage(h, page) {
 async function pickForHoliday(h, avoidID) {
   const taken = new Set([...picks.rejected, ...picks.pins.filter((p) => p.date !== h.date).map((p) => p.image.id)]);
   let pool = holidayPools.get(h.date);
-  if (!pool || pool.query !== h.query) pool = { query: h.query, entries: [], shown: new Set(), nextPage: 1, more: true };
+  const queryKey = queriesOf(h).join(" | ");
+  if (!pool || pool.query !== queryKey) pool = { query: queryKey, entries: [], shown: new Set(), nextPage: 1, more: true };
   holidayPools.set(h.date, pool);
   if (avoidID) pool.shown.add(avoidID);
   const usable = () => pool.entries.filter((e) => !taken.has(e.id) && !pool.shown.has(e.id));
@@ -285,7 +291,7 @@ async function pickForHoliday(h, avoidID) {
     if (avoidID) pool.shown.add(avoidID);
   }
   const options = usable();
-  if (!options.length) return { chosen: null, reason: problems.length ? problems.join("; ") : `no portrait matches for "${h.query}"` };
+  if (!options.length) return { chosen: null, reason: problems.length ? problems.join("; ") : `no portrait matches for "${queryKey}"` };
   const chosen = options[Math.floor(Math.random() * options.length)];
   pool.shown.add(chosen.id);
   return { chosen, reason: null };
