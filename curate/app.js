@@ -226,6 +226,38 @@ function renderKept() {
   });
 }
 
+// ---- shuffle: mix the libraries through the rotation
+
+/// Fisher–Yates on a copy.
+function shuffled(list) {
+  const a = [...list];
+  for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
+  return a;
+}
+/// Shuffle within each library, then round-robin across libraries, so a
+/// run of newly kept prints spreads through the year instead of sitting
+/// at the end. Pure; exposed for testing.
+function mixedOrder(kept) {
+  const bySource = {};
+  for (const e of kept) (bySource[sourceOf(e)] ??= []).push(e);
+  return interleave(Object.values(bySource).map(shuffled)).map((e) => e.id);
+}
+window.mixedOrder = mixedOrder;
+
+let orderBeforeShuffle = null;
+$("shuffle").onclick = async () => {
+  if (state.kept.length < 2) return;
+  orderBeforeShuffle = state.kept.map((e) => e.id);
+  applyState(await api("/api/order", { ids: mixedOrder(state.kept) }));
+  $("unshuffle").hidden = false;
+};
+$("unshuffle").onclick = async () => {
+  if (!orderBeforeShuffle) return;
+  applyState(await api("/api/order", { ids: orderBeforeShuffle }));
+  orderBeforeShuffle = null;
+  $("unshuffle").hidden = true;
+};
+
 // ---- decisions
 
 async function decide(kind) {

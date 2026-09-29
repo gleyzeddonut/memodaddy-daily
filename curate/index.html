@@ -26,6 +26,8 @@
   button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
   button.keep { background: var(--keep); border-color: var(--keep); color: #fff; }
   button.reject { background: var(--reject); border-color: var(--reject); color: #fff; }
+  button.small { padding: 2px 8px; font-size: 12px; margin-left: 8px; }
+  button[hidden] { display: none; }
   .spacer { flex: 1; }
   .stat { color: var(--muted); font-size: 13px; }
   main { display: grid; grid-template-columns: minmax(280px, 1fr) 320px; gap: 24px; padding: 20px 24px; min-height: 0; overflow: auto; }
@@ -116,7 +118,10 @@
   </aside>
 </main>
 <footer>
-  <div class="strip-head"><b id="keptCount"></b> <span>kept, in day order — drag to reorder, click to view</span> <span class="spacer"></span> <span id="queueCount"></span></div>
+  <div class="strip-head"><b id="keptCount"></b> <span>kept, in day order — drag to reorder, click to view</span>
+    <button id="shuffle" class="small" title="shuffle each library's picks, then let the libraries take turns, so consecutive days differ">Shuffle (mix sources)</button>
+    <button id="unshuffle" class="small" hidden>Undo shuffle</button>
+    <span class="spacer"></span> <span id="queueCount"></span></div>
   <div class="strip" id="kept"></div>
   <div class="strip-head"><b id="queueLabel">results</b> <span id="queueNote">search above, or load sources.json</span></div>
   <div class="strip" id="queue"></div>
