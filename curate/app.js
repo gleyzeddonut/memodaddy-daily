@@ -19,7 +19,8 @@ const proxied = (url, w, h) => `/img?u=${encodeURIComponent(sized(url, w, h))}`;
 const stageURL = (e) => proxied(e.url, 780, 1690);
 const thumbURL = (e) => proxied(e.url, 84, 180);
 /// Which library an entry came from, by id prefix.
-const SOURCE_BADGE = { unsplash: "U", aic: "AIC", met: "MET" };
+const SOURCE_BADGE = { unsplash: "U", ill: "ILL", aic: "AIC", met: "MET", loc: "LOC", wellcome: "WC" };
+const ALL_SOURCES = ["unsplash", "ill", "aic", "met", "loc", "wellcome"];
 function sourceOf(entry) {
   const m = String(entry.id).match(/^([a-z]+)-/);
   return m ? m[1] : "other";
@@ -34,7 +35,7 @@ function badge(entry) {
 }
 /// The header's source picker: scopes searches and filters the kept strip.
 const selectedSource = () => $("source").value;
-const SOURCE_PREFIX = { unsplash: "", aic: "aic: ", met: "met: " };
+const SOURCE_PREFIX = { unsplash: "", ill: "ill: ", aic: "aic: ", met: "met: ", loc: "loc: ", wellcome: "wellcome: " };
 /// Mirrors DailyCredit.line in the app.
 function creditLine(c) {
   if (!c) return "";
@@ -335,12 +336,12 @@ $("search").onsubmit = async (ev) => {
       // Every library at once: Unsplash (two pages), AIC and the Met (one
       // page each; the Met is slow), interleaved. A failing library is
       // skipped, not fatal.
-      const terms = [term, `aic: ${term}`, `met: ${term}`];
-      const results = await Promise.allSettled([search(terms[0], 2), search(terms[1], 1), search(terms[2], 1)]);
+      const terms = ALL_SOURCES.map((k) => SOURCE_PREFIX[k] + term);
+      const results = await Promise.allSettled(terms.map((t, i) => search(t, ALL_SOURCES[i] === "unsplash" ? 2 : 1)));
       const lists = results.map((r) => (r.status === "fulfilled" ? r.value : []));
       const failed = results.map((r, i) => (r.status === "rejected" ? terms[i].split(":")[0] : null)).filter(Boolean);
       if (failed.length) console.warn("search failed for", failed, results.filter((r) => r.status === "rejected").map((r) => r.reason?.message));
-      found = interleave(lists);
+      found = interleave(shuffled(lists).map(shuffled));
       title = `${term} (all sources${failed.length ? `; ${failed.join(", ")} failed` : ""})`;
     } else {
       if (sel !== "all" && !hasPrefix) term = SOURCE_PREFIX[sel] + term;
@@ -378,14 +379,16 @@ async function browseOnce(source, page) {
 async function browse(append = false) {
   const sel = selectedSource();
   browsePage = append ? browsePage + 1 : 1;
-  const sources = sel === "all" ? ["unsplash", "aic", "met"] : [sel];
+  const sources = sel === "all" ? shuffled(ALL_SOURCES) : [sel];
   $("browse").disabled = true; $("browseMore").disabled = true;
   $("queueNote").textContent = `loading ${sources.map((k) => SOURCE_BADGE[k]).join(" · ")}…`;
   try {
     const results = await Promise.allSettled(sources.map((k) => browseOnce(k, browsePage)));
     const lists = results.map((r) => (r.status === "fulfilled" ? r.value : []));
     const failed = sources.filter((_, i) => results[i].status === "rejected");
-    const fresh = interleave(lists).filter((e) => e.status === "new");
+    // Random order within each library and a random library order, so
+    // "All sources" never shows the same mix twice.
+    const fresh = interleave(lists.map(shuffled)).filter((e) => e.status === "new");
     const title = `browsing ${sel === "all" ? "all sources" : SOURCE_BADGE[sel]}${failed.length ? ` (${failed.join(", ")} failed)` : ""}`;
     if (append) {
       const seen = new Set(queue.map((e) => e.id));

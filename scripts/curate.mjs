@@ -96,7 +96,7 @@ async function handle(req, res) {
         const r = await fetchPage(parsed.collection ? { collection: parsed.collection } : { query: parsed.query }, page, key, PER_PAGE);
         rateRemaining = r.remaining; candidates = r.photos; more = r.more;
       } else {
-        const r = await SOURCES[parsed.source].page(parsed.query, page, PER_PAGE);
+        const r = await SOURCES[parsed.source].page(parsed.query, page, PER_PAGE, { api, entry, key });
         candidates = r.entries; more = r.more;
       }
       return send(res, 200, { source: parsed.source, candidates: candidates.map((e) => ({ ...e, status: statusOf(e.id) })), more, rateRemaining });
@@ -116,7 +116,7 @@ async function handle(req, res) {
         rateRemaining = remaining;
         entries = body.filter((ph) => ph.height > ph.width * 1.2).map(entry);
       } else if (SOURCES[source]?.browse) {
-        ({ entries, more } = await SOURCES[source].browse(page, PER_PAGE));
+        ({ entries, more } = await SOURCES[source].browse(PER_PAGE, { api, entry, key }));
       } else {
         return send(res, 400, { error: "unknown source" });
       }

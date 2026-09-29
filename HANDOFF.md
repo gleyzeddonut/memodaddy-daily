@@ -110,7 +110,17 @@ and Openverse would need free API keys and are not wired yet. AIC has
 only one public-domain Ohara Koson with an image; Hasui isn't marked
 public domain there — Hokusai/Hiroshige/Harunobu are plentiful.
 
-**Browse (no keywords)**: `/api/browse?source=unsplash|aic|met&page=N`
+**Six libraries** (Sep 28, late): `ill` (Unsplash illustrations via
+`/search/illustrations`, same key; adapters get `ctx = { api, entry,
+key }`), `loc` (LoC WPA posters collection JSON, largest `image_url`
+~1024px, `personName` flips "last, first"), `wellcome` (catalogue v2
+`images`, `locations.license=cc-by,pdm`, IIIF crop from the thumbnail's
+image id, `aspectRatio` = w/h for the portrait filter). Badges: U · ILL ·
+AIC · MET · LOC · WC. AIC ignores `random_score` and caps searches at
+1,000 results, so its browse uses a random `id` window of 40k plus a
+random page — verified to differ call to call.
+
+**Browse (no keywords)**: `/api/browse?source=<any of the six>`
 — Unsplash `/photos/random` (30 portrait); AIC `function_score` /
 `random_score` (seed per page) over public-domain works in print/
 painting/drawing/poster/textile/watercolour classes; the Met samples
