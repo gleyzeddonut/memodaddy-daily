@@ -18,6 +18,20 @@ function sized(url, w, h) {
 const proxied = (url, w, h) => `/img?u=${encodeURIComponent(sized(url, w, h))}`;
 const stageURL = (e) => proxied(e.url, 780, 1690);
 const thumbURL = (e) => proxied(e.url, 84, 180);
+/// Which library an entry came from, by id prefix.
+const SOURCE_BADGE = { unsplash: "U", aic: "AIC", met: "MET" };
+function sourceOf(entry) {
+  const m = String(entry.id).match(/^([a-z]+)-/);
+  return m ? m[1] : "other";
+}
+function badge(entry) {
+  const src = sourceOf(entry);
+  const b = document.createElement("span");
+  b.className = `badge badge-${src}`;
+  b.textContent = SOURCE_BADGE[src] ?? src.toUpperCase();
+  b.title = entry.credit?.sourceName ?? (src === "unsplash" ? "Unsplash" : src);
+  return b;
+}
 /// Mirrors DailyCredit.line in the app.
 function creditLine(c) {
   if (!c) return "";
@@ -39,7 +53,10 @@ function applyState(s) {
 }
 
 function renderCounts() {
-  $("keptCount").textContent = state.kept.length;
+  const perSource = {};
+  for (const e of state.kept) { const k = sourceOf(e); perSource[k] = (perSource[k] ?? 0) + 1; }
+  const parts = Object.entries(perSource).map(([k, n]) => `${n} ${SOURCE_BADGE[k] ?? k}`).join(" · ");
+  $("keptCount").textContent = `${state.kept.length}${parts ? ` (${parts})` : ""}`;
   $("queueCount").textContent = queue.length ? `${Math.max(index, 0) + 1} / ${queue.length} in queue` : "queue empty — search above";
   $("rate").textContent = state.rateRemaining == null ? "" : `Unsplash: ${state.rateRemaining} requests left this hour`;
 }
@@ -148,8 +165,9 @@ function renderQueue() {
     const status = state.kept.some((k) => k.id === e.id) ? "kept" : state.rejected.includes(e.id) ? "rejected" : "";
     d.className = `thumb ${status} ${i === index ? "current" : ""}`;
     d.style.backgroundImage = `url('${thumbURL(e)}')`;
-    d.title = e.credit?.name ?? e.id;
+    d.title = `${e.credit?.name ?? e.id} — ${e.credit?.sourceName ?? "Unsplash"}`;
     d.onclick = () => { index = i; renderQueue(); renderCounts(); show(e); };
+    d.appendChild(badge(e));
     el.appendChild(d);
   });
   el.querySelector(".current")?.scrollIntoView({ inline: "nearest", block: "nearest" });
@@ -166,7 +184,8 @@ function renderKept() {
     d.draggable = true;
     d.dataset.id = e.id;
     d.style.backgroundImage = `url('${thumbURL(e)}')`;
-    d.title = `${e.credit?.name ?? e.id} — click to view, drag to reorder`;
+    d.title = `${e.credit?.name ?? e.id} — ${e.credit?.sourceName ?? "Unsplash"} — click to view, drag to reorder`;
+    d.appendChild(badge(e));
     d.onclick = () => { shown = e; show(e); renderKept(); };
     d.ondragstart = (ev) => { ev.dataTransfer.setData("text/plain", e.id); d.classList.add("dragging"); };
     d.ondragend = () => d.classList.remove("dragging");

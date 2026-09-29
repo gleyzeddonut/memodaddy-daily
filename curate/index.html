@@ -69,6 +69,12 @@
   .thumb { flex: none; width: 42px; height: 90px; border-radius: 6px; background-size: cover; background-position: center; cursor: pointer; border: 2px solid transparent; position: relative; }
   .thumb.current { border-color: var(--accent); }
   .thumb.kept::after { content: ""; position: absolute; right: 2px; top: 2px; width: 8px; height: 8px; border-radius: 50%; background: var(--keep); }
+  /* source badge, bottom-left of every thumb: white U = Unsplash, red AIC, gold MET */
+  .badge { position: absolute; left: 2px; bottom: 2px; font: 700 8px/1 -apple-system, system-ui, sans-serif; letter-spacing: 0.02em; padding: 2px 3px; border-radius: 3px; color: #fff; background: rgb(0 0 0 / 0.55); pointer-events: none; }
+  .badge-unsplash { background: rgb(0 0 0 / 0.55); }
+  .badge-aic { background: #b1001e; }
+  .badge-met { background: #b8860b; }
+  .badge-other { background: #555; }
   .thumb.rejected { opacity: 0.35; }
   .thumb.dragging { opacity: 0.4; }
   .thumb.over { border-color: var(--keep); }
