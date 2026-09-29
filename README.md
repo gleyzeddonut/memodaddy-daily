@@ -14,9 +14,19 @@ npm run curate                        # opens http://localhost:4747
 
 The page shows each candidate inside a mock of the app's front page,
 dressed in the palette the app will derive from it (same colour maths as
-the app, light or dark scheme included). Search Unsplash in the box, or
-type `collection:<id>` for one of your collections, or press **Load
-sources.json** to queue every query and collection listed there. Then:
+the app, light or dark scheme included). The search box takes:
+
+- plain words → Unsplash photos
+- `collection:<id>` → one of your Unsplash collections
+- `aic: japanese woodblock print` → the Art Institute of Chicago's
+  public-domain works (CC0, no key; every word must match somewhere in
+  artist, title or subject, so `aic: hokusai` is precise)
+- `met: carp dept:6` → the Met's open-access works (no key; its search
+  is loose, `dept:N` narrows it — 6 Asian Art, 9 Drawings and Prints)
+
+or press **Load sources.json** to queue every query listed there. Museum
+pieces are credited "Artist · Library" in the app, both linked; only
+portrait or square works are offered. Then:
 
 - `→` / `K` keep · `←` / `X` reject · `space` skip · `⌫` undo · `U` unkeep
 - **Review kept** steps through what's already in the rotation.

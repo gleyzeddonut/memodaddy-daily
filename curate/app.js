@@ -8,9 +8,22 @@ let shown = null;      // the entry on the phone
 let history = [];      // last decisions, for undo
 let paletteCache = new Map();
 
-const proxied = (url, w, h) => `/img?u=${encodeURIComponent(url.replace(/([?&])w=\d+&h=\d+/, `$1w=${w}&h=${h}`))}`;
+// Unsplash URLs take w/h params; AIC IIIF URLs take a !w,h size segment;
+// anything else is served as-is (the Met's originals are big but cached).
+function sized(url, w, h) {
+  if (url.includes("images.unsplash.com")) return url.replace(/([?&])w=\d+&h=\d+/, `$1w=${w}&h=${h}`);
+  if (url.includes("/iiif/2/")) return url.replace(/\/!\d+,\d+\//, `/!${w},${h}/`);
+  return url;
+}
+const proxied = (url, w, h) => `/img?u=${encodeURIComponent(sized(url, w, h))}`;
 const stageURL = (e) => proxied(e.url, 780, 1690);
 const thumbURL = (e) => proxied(e.url, 84, 180);
+/// Mirrors DailyCredit.line in the app.
+function creditLine(c) {
+  if (!c) return "";
+  if (c.sourceName) return `${c.name} · ${c.sourceName}`;
+  return c.source === "unsplash" ? `Photo by ${c.name} on Unsplash` : `Photo by ${c.name}`;
+}
 
 async function api(path, body) {
   const res = await fetch(path, body ? { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) } : {});
@@ -60,7 +73,7 @@ async function show(entry) {
     return;
   }
   const status = state.kept.some((k) => k.id === entry.id) ? "kept" : state.rejected.includes(entry.id) ? "rejected" : "undecided";
-  $("meta").innerHTML = `<b>${entry.credit?.name ?? "Unknown"}</b><br>${entry.id}<br>status: <b>${status}</b>`;
+  $("meta").innerHTML = `<b>${entry.credit?.name ?? "Unknown"}</b>${entry.title ? `<br><i>${entry.title}</i>` : ""}${entry.detail ? `<br>${entry.detail}` : ""}<br>${entry.credit?.sourceName ?? (entry.credit?.source === "unsplash" ? "Unsplash" : "")} · ${entry.id}<br>status: <b>${status}</b>`;
   phone.innerHTML = `<div class="photo" style="background-image:url('${stageURL(entry)}')"></div><div class="empty" style="position:absolute;inset:0;display:grid;place-items:center;color:#fff">…</div>`;
   $("swatches").innerHTML = ""; $("paletteMeta").textContent = "reading colours…";
   let p;
@@ -79,7 +92,7 @@ async function show(entry) {
     <div class="wordmark daddy" style="color:${p.textPrimary}">daddy</div>
     <div class="tuner" style="color:${p.linkAccent}">tuner</div>
     <div class="ring" style="border-color:${p.recordRing}"><div class="fill" style="background:${p.recordFill}"></div></div>
-    <div class="credit" style="color:${p.textPrimary}">Photo by ${entry.credit?.name ?? "?"} on Unsplash</div>
+    <div class="credit" style="color:${p.textPrimary}">${creditLine(entry.credit)}</div>
     <div class="nav">
       <span style="left:38px;color:${p.textPrimary}">capture</span>
       <span class="dot" style="background:${p.textPrimary}"></span>
@@ -205,11 +218,10 @@ async function undo() {
 // ---- fetching candidates
 
 async function search(term, pages = 2) {
-  const collection = term.match(/^collection:\s*(\d+)/i)?.[1];
   const found = [];
   for (let page = 1; page <= pages; page++) {
-    const res = await api(collection ? `/api/search?collection=${collection}&page=${page}` : `/api/search?q=${encodeURIComponent(term)}&page=${page}`);
-    state.rateRemaining = res.rateRemaining;
+    const res = await api(`/api/search?term=${encodeURIComponent(term)}&page=${page}`);
+    if (res.rateRemaining != null) state.rateRemaining = res.rateRemaining;
     found.push(...res.candidates);
     if (!res.more) break;
   }

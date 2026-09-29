@@ -83,6 +83,7 @@ export function entry(photo) {
 }
 
 export const isUnsplash = (e) => String(e.id).startsWith("unsplash-");
+export { isCurated, SOURCES, parseTerm } from "./sources.mjs";
 
 /// picks.json: `kept` holds full entries in rotation order (the record of
 /// what was chosen, so the manifest never needs the API to rebuild);
@@ -94,10 +95,11 @@ export async function readPicks() {
 }
 
 /// manifest.json = the hand-added entries already in it (kept in front,
-/// in their order) + the kept Unsplash picks in picks order.
+/// in their order) + the kept picks (any library) in picks order.
 export async function buildManifest(picks) {
+  const { isCurated } = await import("./sources.mjs");
   const existing = await readJSON(manifestPath, { images: [] });
-  const handAdded = (existing.images ?? []).filter((e) => !isUnsplash(e));
+  const handAdded = (existing.images ?? []).filter((e) => !isCurated(e));
   const manifest = { images: [...handAdded, ...picks.kept] };
   await writeJSON(manifestPath, manifest);
   return manifest;

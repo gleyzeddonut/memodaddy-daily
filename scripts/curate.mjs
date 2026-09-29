@@ -17,6 +17,7 @@ import {
   root, sourcesPath, PER_PAGE, loadDotEnv, readJSON, writeJSON, picksPath,
   readPicks, buildManifest, fetchPage, isUnsplash, ApiError,
 } from "./lib.mjs";
+import { SOURCES, parseTerm, isCurated } from "./sources.mjs";
 
 const PORT = Number(process.env.PORT ?? 4747);
 const key = await loadDotEnv();
@@ -24,7 +25,7 @@ if (!key) { console.error("error: set UNSPLASH_ACCESS_KEY (or put it in .env)");
 
 const staticDir = path.join(root, "curate");
 const types = { ".html": "text/html; charset=utf-8", ".js": "text/javascript; charset=utf-8", ".css": "text/css; charset=utf-8" };
-const imageHosts = new Set(["images.unsplash.com", "raw.githubusercontent.com"]);
+const imageHosts = new Set(["images.unsplash.com", "raw.githubusercontent.com", ...Object.values(SOURCES).map((s) => s.imageHost)]);
 
 let picks = await readPicks();
 let rateRemaining = null;
@@ -45,7 +46,8 @@ async function state() {
   return {
     kept: picks.kept,
     rejected: picks.rejected,
-    handAdded: (manifest.images ?? []).filter((e) => !isUnsplash(e)),
+    handAdded: (manifest.images ?? []).filter((e) => !isCurated(e)),
+    libraries: Object.fromEntries(Object.entries(SOURCES).map(([k, v]) => [k, v.label])),
     sources: await readJSON(sourcesPath, { collections: [], queries: [] }),
     rateRemaining,
   };
@@ -71,7 +73,8 @@ async function handle(req, res) {
     let t;
     try { t = new URL(target); } catch { return send(res, 400, { error: "bad url" }); }
     if (t.protocol !== "https:" || !imageHosts.has(t.hostname)) return send(res, 403, { error: "host not allowed" });
-    const upstream = await fetch(t);
+    // Some image CDNs (AIC's IIIF) refuse requests without a browser-ish UA.
+    const upstream = await fetch(t, { headers: { "user-agent": "Mozilla/5.0 (memodaddy-curation)", accept: "image/*" } });
     if (!upstream.ok) return send(res, upstream.status, { error: "upstream" });
     res.writeHead(200, { "content-type": upstream.headers.get("content-type") ?? "image/jpeg", "cache-control": "max-age=86400" });
     res.end(Buffer.from(await upstream.arrayBuffer()));
@@ -82,14 +85,21 @@ async function handle(req, res) {
 
   if (p === "/api/search") {
     const page = Number(url.searchParams.get("page") ?? "1");
-    const source = url.searchParams.get("collection")
-      ? { collection: url.searchParams.get("collection") }
-      : { query: url.searchParams.get("q") ?? "" };
-    if (!source.collection && !source.query) return send(res, 400, { error: "q or collection required" });
+    const term = url.searchParams.get("term");
+    const parsed = term != null ? parseTerm(term)
+      : url.searchParams.get("collection") ? { source: "unsplash", collection: url.searchParams.get("collection") }
+      : { source: "unsplash", query: url.searchParams.get("q") ?? "" };
+    if (!parsed.collection && !parsed.query) return send(res, 400, { error: "a query is required" });
     try {
-      const { photos, remaining, more } = await fetchPage(source, page, key, PER_PAGE);
-      rateRemaining = remaining;
-      return send(res, 200, { candidates: photos.map((e) => ({ ...e, status: statusOf(e.id) })), more, rateRemaining });
+      let candidates, more;
+      if (parsed.source === "unsplash") {
+        const r = await fetchPage(parsed.collection ? { collection: parsed.collection } : { query: parsed.query }, page, key, PER_PAGE);
+        rateRemaining = r.remaining; candidates = r.photos; more = r.more;
+      } else {
+        const r = await SOURCES[parsed.source].page(parsed.query, page, PER_PAGE);
+        candidates = r.entries; more = r.more;
+      }
+      return send(res, 200, { source: parsed.source, candidates: candidates.map((e) => ({ ...e, status: statusOf(e.id) })), more, rateRemaining });
     } catch (err) {
       return send(res, err instanceof ApiError ? err.status : 500, { error: err.message });
     }
@@ -100,11 +110,14 @@ async function handle(req, res) {
     switch (p) {
       case "/api/keep": {
         const e = body.entry;
-        if (!e?.id || !isUnsplash(e) || typeof e.url !== "string" || !e.url.startsWith("https://images.unsplash.com/")) {
-          return send(res, 400, { error: "not an Unsplash entry" });
-        }
+        let host;
+        try { host = new URL(e?.url ?? "").hostname; } catch { host = ""; }
+        const ok = e?.id && isCurated(e) && typeof e.url === "string" && e.url.startsWith("https://") && imageHosts.has(host);
+        if (!ok) return send(res, 400, { error: "not an entry from a known library" });
         picks.rejected = picks.rejected.filter((id) => id !== e.id);
-        if (!picks.kept.some((k) => k.id === e.id)) picks.kept.push({ id: e.id, url: e.url, color: e.color, credit: e.credit });
+        if (!picks.kept.some((k) => k.id === e.id)) {
+          picks.kept.push({ id: e.id, url: e.url, color: e.color, credit: e.credit, title: e.title, detail: e.detail });
+        }
         break;
       }
       case "/api/reject":

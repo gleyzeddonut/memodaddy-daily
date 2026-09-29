@@ -95,6 +95,21 @@ server's `/img` proxy (hosts: images.unsplash.com, raw.githubusercontent
 page; the server makes the API calls (`/api/search?q=…|collection=…`).
 POST `/api/keep|reject|clear|order` write picks and rebuild the manifest.
 
+**Libraries** (`scripts/sources.mjs`, Sep 28 night): the search term can
+be prefixed `aic:` (Art Institute of Chicago — POST search with an
+exact multi-field `multi_match`, `is_public_domain` filter, IIIF URL with
+a `pct:` region cropped to the phone aspect and `!1290,2796` size) or
+`met:` (Met open access — `search` then one `objects/{id}` call per hit,
+`dept:N` → `departmentId`, original-size images, so big). Both yield
+entries `{ id: "<prefix>-<id>", url, title, detail, credit: { source,
+sourceName, name, link, sourceLink } }`; the app shows "Artist ·
+Library". `isCurated` (any known prefix) replaces `isUnsplash` in the
+manifest builder, keep validation and the proxy host list; adding a
+library = one adapter object in `SOURCES`. Rijksmuseum, Smithsonian
+and Openverse would need free API keys and are not wired yet. AIC has
+only one public-domain Ohara Koson with an image; Hasui isn't marked
+public domain there — Hokusai/Hiroshige/Harunobu are plentiful.
+
 `sources.json` is now just a list the **Load sources.json** button can
 queue (queries and collection ids); it no longer feeds the manifest by
 itself. There is no automatic pull any more: nothing enters the rotation
