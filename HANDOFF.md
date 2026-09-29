@@ -138,11 +138,13 @@ without a keep.
   and hand-added photos get matched colours too; the manifest `color`
   field is informational only.
 - Tuner-link legibility (mumo `Theme.legibleAccent`, `Palette.linkAccent`,
-  `DailyColors.linkRegionLuminance`): the accent is re-depthed to clear
-  4:1 over the photo patch behind the link; the page mirrors it
-  (`legibleAccent`, `LEGIBILITY_TARGET` in palette.js) and prints
-  "tuner contrast over the photo N:1", flagging a fall-back to plain
-  black/white. Photos that pass on average but look busy behind the
+  `DailyColors.linkRegionLuminance` + `…Low/High` percentiles): the
+  accent is re-depthed to clear 4.5:1 over the mean and both ends of
+  the photo patch behind the link, else the scheme's text colour; the
+  app also draws a page-colour halo behind the tuner text. The page
+  mirrors all of it (`legibleAccent`, `LEGIBILITY_TARGET` in palette.js,
+  a text-shadow on the mock) and prints the worst-case contrast,
+  flagging a fall-back. Photos that pass on average but look busy behind the
   link are still a taste call — reject them.
 - `Mumo/Views/FrontPageView.swift`: `dailyImage`, `dailyCredit` inputs;
   `dailyBackdrop` (photo + page-colour gradient, 18% while recording);

@@ -74,7 +74,7 @@ async function show(entry) {
     <div class="status" style="color:${p.textPrimary}">9:41</div>
     <div class="wordmark memo" style="color:${p.textPrimary}">memo</div>
     <div class="wordmark daddy" style="color:${p.textPrimary}">daddy</div>
-    <div class="tuner" style="color:${p.linkAccent}">tuner</div>
+    <div class="tuner" style="color:${p.linkAccent};text-shadow:0 0 12px ${p.background}, 0 0 3px ${p.background}">tuner</div>
     <div class="ring" style="border-color:${p.recordRing}"><div class="fill" style="background:${p.recordRed}"></div></div>
     <div class="credit" style="color:${p.textPrimary}">Photo by ${entry.credit?.name ?? "?"} on Unsplash</div>
     <div class="nav">
@@ -87,9 +87,9 @@ async function show(entry) {
   $("swatches").innerHTML = [["bg", p.background], ["card", p.card], ["accent", p.accent], ["tuner", p.linkAccent]]
     .map(([n, c]) => `<div class="swatch" style="background:${c}" title="${c}"><span>${n}</span></div>`).join("");
   const c = p.colors;
-  const linkNote = p.linkFallback ? ` · <b style="color:var(--reject)">tuner fell back to plain ${p.dark ? "white" : "black"}</b>`
+  const linkNote = p.linkFallback ? ` · <b style="color:var(--reject)">tuner fell back to the text colour</b> (mixed patch; the halo carries it)`
     : p.linkAdjusted ? " · tuner re-depthed to read over the photo" : "";
-  $("paletteMeta").innerHTML = `scheme <b>${p.dark ? "dark" : "light"}</b> (luma ${c.averageLuma.toFixed(2)}) · accent hue <b>${Math.round(c.accentHue * 360)}°</b> sat ${c.accentSaturation.toFixed(2)}${c.vivid ? "" : " · <b>no vivid colour</b>, muted accent"}<br>tuner contrast over the photo <b>${p.linkContrast.toFixed(1)}:1</b>${linkNote}`;
+  $("paletteMeta").innerHTML = `scheme <b>${p.dark ? "dark" : "light"}</b> (luma ${c.averageLuma.toFixed(2)}) · accent hue <b>${Math.round(c.accentHue * 360)}°</b> sat ${c.accentSaturation.toFixed(2)}${c.vivid ? "" : " · <b>no vivid colour</b>, muted accent"}<br>tuner contrast over the photo (worst of mean/dark/light ends) <b>${p.linkContrast.toFixed(1)}:1</b>${linkNote}`;
 }
 
 // ---- queue

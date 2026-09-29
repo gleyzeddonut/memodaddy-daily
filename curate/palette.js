@@ -18,7 +18,7 @@ export function hsv(r, g, b) {
 export const linear = (c) => (c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4));
 export const relLum = (r, g, b) => 0.2126 * linear(r) + 0.7152 * linear(g) + 0.0722 * linear(b);
 export const contrast = (a, b) => (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05);
-export const LEGIBILITY_TARGET = 4.0; // keep in step with Theme.legibilityTarget
+export const LEGIBILITY_TARGET = 4.5; // keep in step with Theme.legibilityTarget
 
 /// The tuner link's patch (x 20–140pt, y 380–430pt of 390×844) in sample-grid units.
 function linkRegion(sample) {
@@ -39,12 +39,12 @@ export function extract(img, sample = 40) {
   const binWeight = new Float64Array(bins), binSin = new Float64Array(bins), binCos = new Float64Array(bins), binSat = new Float64Array(bins);
   let sumR = 0, sumG = 0, sumB = 0;
   const region = linkRegion(sample);
-  let regionLum = 0, regionCount = 0;
+  const regionLums = [];
   for (let i = 0; i < count; i++) {
     const r = data[i * 4] / 255, g = data[i * 4 + 1] / 255, b = data[i * 4 + 2] / 255;
     sumR += r; sumG += g; sumB += b;
     const x = i % sample, y = Math.floor(i / sample);
-    if (x >= region.x0 && x < region.x1 && y >= region.y0 && y < region.y1) { regionLum += relLum(r, g, b); regionCount++; }
+    if (x >= region.x0 && x < region.x1 && y >= region.y0 && y < region.y1) regionLums.push(relLum(r, g, b));
     const { h, s, v } = hsv(r, g, b);
     if (!(s > 0.15 && v > 0.15 && v < 0.985)) continue;
     const w = s * s * Math.min(1, (v - 0.15) / 0.35) * (v > 0.96 ? 0.2 : 1);
@@ -57,16 +57,19 @@ export function extract(img, sample = 40) {
   const n = count;
   const avgR = sumR / n, avgG = sumG / n, avgB = sumB / n;
   const luma = 0.2126 * avgR + 0.7152 * avgG + 0.0722 * avgB;
-  const linkRegionLuminance = regionCount ? regionLum / regionCount : 0.5;
+  regionLums.sort((a, b) => a - b);
+  const linkRegionLuminance = regionLums.length ? regionLums.reduce((a, b) => a + b, 0) / regionLums.length : 0.5;
+  const linkRegionLuminanceLow = regionLums.length ? regionLums[Math.floor(regionLums.length / 4)] : null;
+  const linkRegionLuminanceHigh = regionLums.length ? regionLums[Math.min(regionLums.length - 1, Math.floor(regionLums.length * 3 / 4))] : null;
   let best = 0;
   for (let i = 1; i < bins; i++) if (binWeight[i] > binWeight[best]) best = i;
   if (binWeight[best] >= 0.01 * n) {
     let hue = Math.atan2(binSin[best], binCos[best]) / (2 * Math.PI);
     if (hue < 0) hue += 1;
-    return { accentHue: hue, accentSaturation: binSat[best] / binWeight[best], averageRed: avgR, averageGreen: avgG, averageBlue: avgB, averageLuma: luma, linkRegionLuminance, vivid: true };
+    return { accentHue: hue, accentSaturation: binSat[best] / binWeight[best], averageRed: avgR, averageGreen: avgG, averageBlue: avgB, averageLuma: luma, linkRegionLuminance, linkRegionLuminanceLow, linkRegionLuminanceHigh, vivid: true };
   }
   const { h, s } = hsv(avgR, avgG, avgB);
-  return { accentHue: h, accentSaturation: Math.min(s, 0.25), averageRed: avgR, averageGreen: avgG, averageBlue: avgB, averageLuma: luma, linkRegionLuminance, vivid: false };
+  return { accentHue: h, accentSaturation: Math.min(s, 0.25), averageRed: avgR, averageGreen: avgG, averageBlue: avgB, averageLuma: luma, linkRegionLuminance, linkRegionLuminanceLow, linkRegionLuminanceHigh, vivid: false };
 }
 
 function hsbToRgb(h, s, b) {
@@ -79,9 +82,13 @@ const css = ([r, g, b]) => `rgb(${Math.round(r * 255)} ${Math.round(g * 255)} ${
 const lumOf = ([r, g, b]) => relLum(r, g, b);
 const mixLum = (avg, toward, amount) => relLum(...avg.map((c, i) => c + (toward[i] - c) * amount));
 
-/// Port of Theme.legibleAccent: [s, b] clearing 3:1 over `luminance`, or null.
-export function legibleAccent(hue, saturation, brightness, luminance) {
-  const ok = (s, b) => contrast(lumOf(hsbToRgb(hue, s, b)), luminance) >= LEGIBILITY_TARGET;
+/// Port of Theme.legibleAccent: [s, b] clearing the target over every
+/// luminance in `lums` (a number or an array), or null.
+export function legibleAccent(hue, saturation, brightness, lums) {
+  const list = Array.isArray(lums) ? lums : [lums];
+  if (!list.length) return [saturation, brightness];
+  const luminance = Math.max(...list);
+  const ok = (s, b) => { const l = lumOf(hsbToRgb(hue, s, b)); return list.every((x) => contrast(l, x) >= LEGIBILITY_TARGET); };
   if (ok(saturation, brightness)) return [saturation, brightness];
   const candidates = [];
   if (luminance < 0.18) {
@@ -111,13 +118,15 @@ export function palette(colors) {
   const [aS, aB] = legibleAccent(hue, accentSat, accentBright, pageLum) ?? [0, dark ? 0.95 : 0];
   const accentRgb = hsbToRgb(hue, aS, aB);
   const linkLum = colors.linkRegionLuminance ?? 0.5;
+  const patch = [linkLum, colors.linkRegionLuminanceLow, colors.linkRegionLuminanceHigh].filter((x) => x != null);
   let linkAccentRgb = null, linkFallback = false;
-  if (contrast(lumOf(accentRgb), linkLum) < LEGIBILITY_TARGET) {
-    const l = legibleAccent(hue, accentSat, accentBright, linkLum);
+  if (!patch.every((x) => contrast(lumOf(accentRgb), x) >= LEGIBILITY_TARGET)) {
+    const l = legibleAccent(hue, accentSat, accentBright, patch);
     if (l) linkAccentRgb = hsbToRgb(hue, l[0], l[1]);
-    else { linkAccentRgb = linkLum > 0.18 ? [0, 0, 0] : [1, 1, 1]; linkFallback = true; }
+    else { linkAccentRgb = dark ? [0xF2 / 255, 0xF2 / 255, 0xF5 / 255] : [0, 0, 0]; linkFallback = true; }
   }
   const linkRgb = linkAccentRgb ?? accentRgb;
+  const linkContrast = Math.min(...patch.map((x) => contrast(lumOf(linkRgb), x)));
   return {
     dark,
     background: surface(dark ? 0.82 : 0.9),
@@ -129,7 +138,7 @@ export function palette(colors) {
     linkAccent: css(linkRgb),
     linkAdjusted: linkAccentRgb !== null,
     linkFallback,
-    linkContrast: contrast(lumOf(linkRgb), linkLum),
+    linkContrast,
     accentContrastOnPage: contrast(lumOf(accentRgb), pageLum),
     textPrimary: base.textPrimary,
     textSecondary: base.textSecondary,
