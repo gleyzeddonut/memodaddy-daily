@@ -141,9 +141,11 @@ without a keep.
   `DailyColors.linkRegionLuminance` + `…Low/High` percentiles): the
   accent is re-depthed to clear 4.5:1 over the mean and both ends of
   the photo patch behind the link, else the scheme's text colour; the
-  app also draws a page-colour halo behind the tuner text. The page
-  mirrors all of it (`legibleAccent`, `LEGIBILITY_TARGET` in palette.js,
-  a text-shadow on the mock) and prints the worst-case contrast,
+  app also fades the photo out under the tuner link and the record
+  button (two radial pools of page colour in `dailyBackdrop`; Dan
+  preferred that to a text glow). The page mirrors all of it
+  (`legibleAccent`, `LEGIBILITY_TARGET` in palette.js, the same two
+  radial gradients on the mock) and prints the worst-case contrast,
   flagging a fall-back. Photos that pass on average but look busy behind the
   link are still a taste call — reject them.
 - `Mumo/Views/FrontPageView.swift`: `dailyImage`, `dailyCredit` inputs;
@@ -209,6 +211,11 @@ succeeds, which is fine once main matches.
   `DailyBackgrounds.previewControlsEnabled` true, a `→` top-right on the
   front page steps through the manifest in day order without pinging
   Unsplash. Dan intends to turn it off for launch.
+- **Launch:** the app shows the cached photo and its stored palette
+  synchronously in `DailyBackgrounds.init` (today's, else the last one
+  shown), so the first frame isn't white; colours are persisted per
+  photo id in UserDefaults (`dailyColors.<id>`). Only the system launch
+  screen is still white.
 - The raw GitHub URL is a fine origin at current scale (one JSON fetch
   per phone per day). If it ever isn't, put the manifest behind any
   static host; the app only needs an HTTPS URL that returns this JSON.
