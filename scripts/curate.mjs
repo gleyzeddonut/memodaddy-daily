@@ -178,8 +178,8 @@ async function handle(req, res) {
         const targets = wanted.filter((h) => body.date ? h.date === body.date : !h.pinned);
         const report = [];
         for (const h of targets) {
-          const chosen = await pickForHoliday(h, body.date ? picks.pins.find((p) => p.date === h.date)?.image?.id : null);
-          if (!chosen) { report.push({ date: h.date, name: h.name, picked: null }); continue; }
+          const { chosen, reason } = await pickForHoliday(h, body.date ? picks.pins.find((p) => p.date === h.date)?.image?.id : null);
+          if (!chosen) { report.push({ date: h.date, name: h.name, picked: null, reason }); continue; }
           picks.pins = picks.pins.filter((p) => p.date !== h.date);
           picks.pins.push({ date: h.date, holiday: h.name, query: h.query, image: chosen });
           report.push({ date: h.date, name: h.name, picked: chosen.credit?.name, from: chosen.id.split("-")[0] });
@@ -226,18 +226,20 @@ async function holidayDates() {
   const y = new Date().getFullYear();
   const out = [];
   for (const h of holidays) {
-    for (const date of resolveDates(h.date, [y, y + 1])) {
+    for (const date of resolveDates(h.date, [y, y + 1], h.dates)) {
       out.push({ name: h.name, date, query: h.query, sources: h.sources ?? ["ill", "aic"], pinned: picks.pins.some((p) => p.date === date) });
     }
   }
   return out;
 }
 
-/// One random portrait candidate for a holiday from its sources, skipping
-/// rejected ids, ids already pinned elsewhere, and `avoidID`.
-async function pickForHoliday(h, avoidID) {
-  const taken = new Set([...picks.rejected, ...picks.pins.map((p) => p.image.id), avoidID].filter(Boolean));
+/// Candidate pools per holiday date, kept for the life of the process so
+/// a re-roll is a free draw from the last search instead of a new call.
+const holidayPools = new Map();
+
+async function searchForHoliday(h) {
   const pool = [];
+  const problems = [];
   for (const src of h.sources) {
     try {
       let entries;
@@ -245,14 +247,33 @@ async function pickForHoliday(h, avoidID) {
         const r = await fetchPage({ query: h.query }, 1, key, PER_PAGE); rateRemaining = r.remaining; entries = r.photos;
       } else if (SOURCES[src]) {
         const r = await SOURCES[src].page(h.query, 1, PER_PAGE, { api, entry, key }); entries = r.entries;
-        if (src === "ill") rateRemaining = Math.max(0, (rateRemaining ?? 50) - 1);
+        if (r.remaining != null) rateRemaining = r.remaining;
       } else continue;
-      pool.push(...entries.filter((e) => !taken.has(e.id)));
+      pool.push(...entries);
     } catch (err) {
+      problems.push(`${src}: ${err.message}`);
       console.warn(`holiday ${h.name}: ${src} failed: ${err.message}`);
     }
   }
-  return pool.length ? pool[Math.floor(Math.random() * pool.length)] : null;
+  return { pool, problems };
+}
+
+/// One random portrait candidate for a holiday, skipping rejected ids,
+/// ids pinned elsewhere, and `avoidID`. Draws from the cached pool when
+/// it still has unused pictures; searches again only when it runs dry.
+async function pickForHoliday(h, avoidID) {
+  const taken = new Set([...picks.rejected, ...picks.pins.map((p) => p.image.id), avoidID].filter(Boolean));
+  let cached = holidayPools.get(h.date);
+  let usable = (cached ?? []).filter((e) => !taken.has(e.id));
+  let problems = [];
+  if (!usable.length) {
+    const r = await searchForHoliday(h);
+    holidayPools.set(h.date, r.pool);
+    usable = r.pool.filter((e) => !taken.has(e.id));
+    problems = r.problems;
+  }
+  if (!usable.length) return { chosen: null, reason: problems.length ? problems.join("; ") : `no portrait matches for "${h.query}"` };
+  return { chosen: usable[Math.floor(Math.random() * usable.length)], reason: null };
 }
 
 const server = http.createServer((req, res) => {

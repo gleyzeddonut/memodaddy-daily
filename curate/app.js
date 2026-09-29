@@ -72,9 +72,18 @@ function renderPins() {
     chip.title = `${creditLine(p.image.credit)} — click to view`;
     chip.onclick = () => { shown = p.image; show(p.image); $("pinDate").value = p.date; };
     if (p.holiday) {
-      const r = document.createElement("span");
-      r.className = "x"; r.style.color = "var(--accent)"; r.textContent = "↻"; r.title = `re-roll ${p.holiday}: another random match`;
-      r.onclick = async (ev) => { ev.stopPropagation(); r.textContent = "…"; try { applyState(await api("/api/holidays/auto", { date: p.date })); } catch (err) { alert(err.message); } };
+      const r = document.createElement("button");
+      r.className = "reroll"; r.type = "button"; r.textContent = "re-roll"; r.title = `${p.holiday}: pin a different random match (free while the last search has unused pictures)`;
+      r.onclick = async (ev) => {
+        ev.stopPropagation(); r.disabled = true; r.textContent = "…";
+        try {
+          const s = await api("/api/holidays/auto", { date: p.date });
+          const rep = s.report?.[0];
+          applyState(s);
+          if (rep && !rep.picked) alert(`${p.holiday}: nothing new to pick — ${rep.reason ?? "no matches"}`);
+          else if (rep) { const np = state.pins.find((x) => x.date === p.date); if (np) { shown = np.image; show(np.image); } }
+        } catch (err) { alert(err.message); r.disabled = false; r.textContent = "re-roll"; }
+      };
       chip.appendChild(r);
     }
     const x = document.createElement("span");
@@ -90,7 +99,9 @@ $("autoHolidays").onclick = async () => {
     const s = await api("/api/holidays/auto", {});
     applyState(s);
     const done = s.report.filter((r) => r.picked), missed = s.report.filter((r) => !r.picked);
-    b.textContent = `${done.length} pinned${missed.length ? `, ${missed.length} found nothing (${missed.map((m) => m.name).join(", ")})` : ""}`;
+    b.textContent = `${done.length} pinned${missed.length ? `, ${missed.length} found nothing` : ""}`;
+    if (missed.length) console.warn("auto-pin found nothing for", missed.map((m) => `${m.name}: ${m.reason}`));
+    if (missed.length && !done.length) alert(missed.map((m) => `${m.name}: ${m.reason ?? "no matches"}`).join("\n"));
     setTimeout(() => { b.textContent = label; }, 6000);
   } catch (err) { alert(err.message); b.textContent = label; }
   b.disabled = false;

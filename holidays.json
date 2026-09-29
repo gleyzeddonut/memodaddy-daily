@@ -1,26 +1,148 @@
 {
-  "_comment": "Holidays the curation page can auto-pin. `date` is MM-DD (every year) or a rule: easter, easter+N, nth-weekday (e.g. 2nd-sunday-05), last-weekday (last-monday-05). `query` is what gets searched; `sources` defaults to [\"ill\", \"aic\"] (one Unsplash call per holiday — the key allows 50 an hour).",
+  "_comment": "Holidays the curation page can auto-pin. `date` is MM-DD (every year) or a rule: easter, easter+N, nth-weekday (e.g. 2nd-sunday-05), last-weekday (last-monday-05), or `table` with a `dates` map of year → MM-DD for calendars we don't compute (Hebrew). Extend the tables past 2030 when the time comes. `query` is what gets searched; `sources` defaults to [\"ill\", \"aic\"] (one Unsplash call per holiday — the key allows 50 an hour).",
   "holidays": [
-    { "name": "New Year's Day",     "date": "01-01",           "query": "fireworks new year night" },
-    { "name": "Valentine's Day",    "date": "02-14",           "query": "hearts love roses" },
-    { "name": "St Patrick's Day",   "date": "03-17",           "query": "shamrock green clover" },
-    { "name": "Spring equinox",     "date": "03-20",           "query": "spring blossom", "sources": ["ill", "aic"] },
-    { "name": "Easter",             "date": "easter",          "query": "easter eggs rabbit spring" },
-    { "name": "Earth Day",          "date": "04-22",           "query": "planet earth nature" },
-    { "name": "Mother's Day",       "date": "2nd-sunday-05",   "query": "flowers bouquet mother" },
-    { "name": "Memorial Day",       "date": "last-monday-05",  "query": "poppies field" },
-    { "name": "Father's Day",       "date": "3rd-sunday-06",   "query": "father and child" },
-    { "name": "Juneteenth",         "date": "06-19",           "query": "freedom celebration red black green" },
-    { "name": "Summer solstice",    "date": "06-21",           "query": "summer sun", "sources": ["ill", "aic"] },
-    { "name": "Independence Day",   "date": "07-04",           "query": "fireworks stars stripes" },
-    { "name": "Labor Day",          "date": "1st-monday-09",   "query": "workers tools vintage", "sources": ["aic", "ill"] },
-    { "name": "Autumn equinox",     "date": "09-22",           "query": "autumn leaves", "sources": ["ill", "aic"] },
-    { "name": "Halloween",          "date": "10-31",           "query": "halloween pumpkin spooky" },
-    { "name": "Day of the Dead",    "date": "11-02",           "query": "day of the dead skull marigold" },
-    { "name": "Thanksgiving",       "date": "4th-thursday-11", "query": "thanksgiving harvest table" },
-    { "name": "Winter solstice",    "date": "12-21",           "query": "winter snow night", "sources": ["aic", "ill"] },
-    { "name": "Christmas Eve",      "date": "12-24",           "query": "christmas lights night" },
-    { "name": "Christmas",          "date": "12-25",           "query": "christmas tree snow" },
-    { "name": "New Year's Eve",     "date": "12-31",           "query": "champagne fireworks party" }
+    {
+      "name": "New Year's Day",
+      "date": "01-01",
+      "query": "fireworks new year night"
+    },
+    {
+      "name": "Valentine's Day",
+      "date": "02-14",
+      "query": "hearts love roses"
+    },
+    {
+      "name": "St Patrick's Day",
+      "date": "03-17",
+      "query": "shamrock green clover"
+    },
+    {
+      "name": "Spring equinox",
+      "date": "03-20",
+      "query": "spring blossom",
+      "sources": [
+        "ill",
+        "aic"
+      ]
+    },
+    {
+      "name": "Easter",
+      "date": "easter",
+      "query": "easter eggs rabbit spring"
+    },
+    {
+      "name": "Earth Day",
+      "date": "04-22",
+      "query": "planet earth nature"
+    },
+    {
+      "name": "Mother's Day",
+      "date": "2nd-sunday-05",
+      "query": "flowers bouquet mother"
+    },
+    {
+      "name": "Memorial Day",
+      "date": "last-monday-05",
+      "query": "poppies field"
+    },
+    {
+      "name": "Father's Day",
+      "date": "3rd-sunday-06",
+      "query": "father and child"
+    },
+    {
+      "name": "Juneteenth",
+      "date": "06-19",
+      "query": "freedom celebration red black green"
+    },
+    {
+      "name": "Summer solstice",
+      "date": "06-21",
+      "query": "summer sun",
+      "sources": [
+        "ill",
+        "aic"
+      ]
+    },
+    {
+      "name": "Independence Day",
+      "date": "07-04",
+      "query": "fireworks stars stripes"
+    },
+    {
+      "name": "Labor Day",
+      "date": "1st-monday-09",
+      "query": "workers tools vintage",
+      "sources": [
+        "aic",
+        "ill"
+      ]
+    },
+    {
+      "name": "Autumn equinox",
+      "date": "09-22",
+      "query": "autumn leaves",
+      "sources": [
+        "ill",
+        "aic"
+      ]
+    },
+    {
+      "name": "Halloween",
+      "date": "10-31",
+      "query": "halloween pumpkin spooky"
+    },
+    {
+      "name": "Day of the Dead",
+      "date": "11-02",
+      "query": "day of the dead skull marigold"
+    },
+    {
+      "name": "Thanksgiving",
+      "date": "4th-thursday-11",
+      "query": "thanksgiving harvest table"
+    },
+    {
+      "name": "Hanukkah",
+      "date": "table",
+      "dates": {
+        "2026": "12-05",
+        "2027": "12-25",
+        "2028": "12-13",
+        "2029": "12-02",
+        "2030": "12-21"
+      },
+      "query": "hanukkah menorah candles",
+      "_note": "first full day; the festival begins at sundown the evening before"
+    },
+    {
+      "name": "Winter solstice",
+      "date": "12-21",
+      "query": "winter snow night",
+      "sources": [
+        "aic",
+        "ill"
+      ]
+    },
+    {
+      "name": "Christmas Eve",
+      "date": "12-24",
+      "query": "christmas lights night"
+    },
+    {
+      "name": "Christmas",
+      "date": "12-25",
+      "query": "christmas tree snow"
+    },
+    {
+      "name": "Kwanzaa",
+      "date": "12-26",
+      "query": "kwanzaa kinara candles red black green"
+    },
+    {
+      "name": "New Year's Eve",
+      "date": "12-31",
+      "query": "champagne fireworks party"
+    }
   ]
 }

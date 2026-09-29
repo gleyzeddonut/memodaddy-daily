@@ -30,9 +30,9 @@ export const SOURCES = {
     idPrefix: "ill-",
     imageHost: "images.unsplash.com",
     async page(query, page, perPage, ctx) {
-      const { body } = await ctx.api("/search/illustrations", { query, page, per_page: perPage, orientation: "portrait" }, ctx.key);
+      const { body, remaining } = await ctx.api("/search/illustrations", { query, page, per_page: perPage, orientation: "portrait" }, ctx.key);
       const entries = (body.results ?? []).filter((p) => p.height > p.width * 1.2).map((p) => this.entry(p, ctx));
-      return { entries, more: page < (body.total_pages ?? 1) };
+      return { entries, more: page < (body.total_pages ?? 1), remaining };
     },
     async browse(perPage, ctx) {
       // No random endpoint for illustrations: a random broad word, then a

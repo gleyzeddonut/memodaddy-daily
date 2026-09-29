@@ -27,8 +27,12 @@ function lastWeekday(year, month, weekday) {
 
 /// The concrete date(s) a holiday rule produces: a fixed "MM-DD" stays
 /// yearly; a rule yields "YYYY-MM-DD" for each year asked for.
-export function resolveDates(rule, years) {
+export function resolveDates(rule, years, dates) {
   if (/^\d{2}-\d{2}$/.test(rule)) return [rule];
+  if (rule === "table") {
+    // Calendars we don't compute (Hebrew): a year → MM-DD map in holidays.json.
+    return years.filter((y) => dates?.[String(y)]).map((y) => `${y}-${dates[String(y)]}`);
+  }
   const out = [];
   for (const y of years) {
     let m;
