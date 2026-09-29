@@ -110,6 +110,19 @@
       }
     },
     {
+      "id": "aic-27729",
+      "url": "https://www.artic.edu/iiif/2/608918c1-0485-64c3-fff1-6b9ded2b8687/pct:20.10,0,59.80,100/!1290,2796/0/default.jpg",
+      "credit": {
+        "source": "aic",
+        "sourceName": "Art Institute of Chicago",
+        "name": "Eugène Carrière",
+        "link": "https://www.artic.edu/artworks/27729",
+        "sourceLink": "https://www.artic.edu"
+      },
+      "title": "Portrait of Paul Verlaine",
+      "detail": "1896 · lithograph"
+    },
+    {
       "id": "unsplash-2vKgG0pSKkM",
       "url": "https://images.unsplash.com/photo-1613578519724-22fdb5d06388?ixid=M3wxMDg2MTUzfDB8MXxzZWFyY2h8MXx8cXVpZXQlMjByb29tJTIwd2luZG93JTIwbGlnaHR8ZW58MXwxfHx8MTc5MDYxODI1OXww&ixlib=rb-4.1.0&w=1290&h=2796&fit=crop&crop=entropy&q=80&fm=jpg",
       "color": "#59400c",
@@ -303,6 +316,19 @@
         "sourceLink": "https://unsplash.com/?utm_source=memo_daddy&utm_medium=referral",
         "downloadLocation": "https://api.unsplash.com/photos/YoK5pBcSY8s/download?ixid=M3wxMDg2MTUzfDB8MXxzZWFyY2h8MXx8aWxsdXN0cmF0aW9ufGVufDF8MXx8fDE3OTA2NjA1MTN8MA"
       }
+    },
+    {
+      "id": "aic-44750",
+      "url": "https://www.artic.edu/iiif/2/96cb8426-330a-ac3c-ba9d-172d9e78b9ce/pct:17.42,0,65.17,100/!1290,2796/0/default.jpg",
+      "credit": {
+        "source": "aic",
+        "sourceName": "Art Institute of Chicago",
+        "name": "Federico Barocci",
+        "link": "https://www.artic.edu/artworks/44750",
+        "sourceLink": "https://www.artic.edu"
+      },
+      "title": "Madonna and Child on Clouds",
+      "detail": "n.d. · print"
     },
     {
       "id": "aic-10086",
@@ -525,6 +551,19 @@
       }
     },
     {
+      "id": "aic-44198",
+      "url": "https://www.artic.edu/iiif/2/1824a39b-9c8c-b246-d14e-5d796874cabc/pct:0.71,0,98.58,100/!1290,2796/0/default.jpg",
+      "credit": {
+        "source": "aic",
+        "sourceName": "Art Institute of Chicago",
+        "name": "Suzuki Harunobu",
+        "link": "https://www.artic.edu/artworks/44198",
+        "sourceLink": "https://www.artic.edu"
+      },
+      "title": "Sugawara Michizane Going into Exile",
+      "detail": "c. 1763/64 · woodblock print"
+    },
+    {
       "id": "unsplash-bmDwsIDg_a8",
       "url": "https://images.unsplash.com/photo-1722858343903-7de9e4491cc8?ixid=M3wxMDg2MTUzfDB8MXxzZWFyY2h8OHx8bWlzdHklMjBmb3Jlc3QlMjBtb3JuaW5nfGVufDF8MXx8fDE3OTA2MTgyNTl8MA&ixlib=rb-4.1.0&w=1290&h=2796&fit=crop&crop=entropy&q=80&fm=jpg",
       "color": "#262626",
@@ -730,6 +769,19 @@
         "sourceLink": "https://unsplash.com/?utm_source=memo_daddy&utm_medium=referral",
         "downloadLocation": "https://api.unsplash.com/photos/WCljGRxA0z4/download?ixid=M3wxMDg2MTUzfDB8MXxyYW5kb218fHx8fHx8fHwxNzkwNjU5OTAxfA"
       }
+    },
+    {
+      "id": "aic-24420",
+      "url": "https://www.artic.edu/iiif/2/e733a86c-3037-de40-0802-d171d22f0fba/pct:18.70,0,62.60,100/!1290,2796/0/default.jpg",
+      "credit": {
+        "source": "aic",
+        "sourceName": "Art Institute of Chicago",
+        "name": "Frederick Warren Freer",
+        "link": "https://www.artic.edu/artworks/24420",
+        "sourceLink": "https://www.artic.edu"
+      },
+      "title": "Caroline D. Wade",
+      "detail": "n.d. · watercolor"
     },
     {
       "id": "ill-j2up0Xr3L3M",
@@ -940,6 +992,19 @@
       }
     },
     {
+      "id": "aic-36008",
+      "url": "https://www.artic.edu/iiif/2/d8c3cbb2-a2fe-4425-b915-8967d05b961a/pct:20.03,0,59.94,100/!1290,2796/0/default.jpg",
+      "credit": {
+        "source": "aic",
+        "sourceName": "Art Institute of Chicago",
+        "name": "Henri de Toulouse-Lautrec",
+        "link": "https://www.artic.edu/artworks/36008",
+        "sourceLink": "https://www.artic.edu"
+      },
+      "title": "Woman at the Mirror—Mirror in Hand, plate six from Elles",
+      "detail": "1896 · lithograph"
+    },
+    {
       "id": "unsplash-LagXkQLC5mU",
       "url": "https://images.unsplash.com/photo-1695109790815-3e2de61c5c98?ixid=M3wxMDg2MTUzfDB8MXxzZWFyY2h8MTl8fG1vdW50YWluJTIwbGFrZSUyMGZvZ3xlbnwxfDF8fHwxNzkwNjE4MjYxfDA&ixlib=rb-4.1.0&w=1290&h=2796&fit=crop&crop=entropy&q=80&fm=jpg",
       "color": "#c0c0c0",
@@ -1147,6 +1212,19 @@
       "detail": "ca. 1820 · Prints"
     },
     {
+      "id": "aic-23864",
+      "url": "https://www.artic.edu/iiif/2/a387665b-0d42-c293-f613-ba18abbd9023/pct:15.72,0,68.55,100/!1290,2796/0/default.jpg",
+      "credit": {
+        "source": "aic",
+        "sourceName": "Art Institute of Chicago",
+        "name": "Kitagawa Utamaro",
+        "link": "https://www.artic.edu/artworks/23864",
+        "sourceLink": "https://www.artic.edu"
+      },
+      "title": "The Courtesan Hisui of the Fan House (Ogiya uchi Hisui), from the series The Five Festivals Flower Competition (Gosechi hana awase)",
+      "detail": "About 1789–1801 · woodblock print"
+    },
+    {
       "id": "unsplash-3oxwkrDSDyk",
       "url": "https://images.unsplash.com/photo-1571406761713-615eb52fb588?ixid=M3wxMDg2MTUzfDB8MXxzZWFyY2h8MTJ8fGRlc2VydCUyMGR1bmVzJTIwc29mdCUyMGxpZ2h0fGVufDF8MXx8fDE3OTA2MTgyNjB8MA&ixlib=rb-4.1.0&w=1290&h=2796&fit=crop&crop=entropy&q=80&fm=jpg",
       "color": "#8c5940",
@@ -1351,6 +1429,19 @@
         "sourceLink": "https://unsplash.com/?utm_source=memo_daddy&utm_medium=referral",
         "downloadLocation": "https://api.unsplash.com/photos/WpV7se6kpqk/download?ixid=M3wxMDg2MTUzfDB8MXxzZWFyY2h8MTN8fGNpdHklMjBuaWdodCUyMHJhaW58ZW58MXwxfHx8MTc5MDYxODI2MHww"
       }
+    },
+    {
+      "id": "aic-23631",
+      "url": "https://www.artic.edu/iiif/2/bb55f818-0d69-9c0e-895b-9dd4faa1bc05/pct:24.31,0,51.37,100/!1290,2796/0/default.jpg",
+      "credit": {
+        "source": "aic",
+        "sourceName": "Art Institute of Chicago",
+        "name": "Totoya Hokkei",
+        "link": "https://www.artic.edu/artworks/23631",
+        "sourceLink": "https://www.artic.edu"
+      },
+      "title": "Potted Plant (Ueki), from the series \"Eighteen Illustrations of the Ladder of Ancient Words (Kogentei juhachiban tsuzuki)\"",
+      "detail": "1831 · woodblock print"
     },
     {
       "id": "aic-157056",
@@ -1562,6 +1653,19 @@
       }
     },
     {
+      "id": "aic-41697",
+      "url": "https://www.artic.edu/iiif/2/ee9eb89d-1e1f-191e-dc13-2c0211bfb1e4/pct:17.14,0,65.72,100/!1290,2796/0/default.jpg",
+      "credit": {
+        "source": "aic",
+        "sourceName": "Art Institute of Chicago",
+        "name": "Carle Vernet",
+        "link": "https://www.artic.edu/artworks/41697",
+        "sourceLink": "https://www.artic.edu"
+      },
+      "title": "Detail of Horse's Head, Enlarged to Triple Size, Hussard, Royal Guard, No. 6",
+      "detail": "c. 1818 · lithograph"
+    },
+    {
       "id": "unsplash-obkW5FQYd_0",
       "url": "https://images.unsplash.com/photo-1691862041020-8b00c32b84d4?ixid=M3wxMDg2MTUzfDB8MXxzZWFyY2h8MTR8fG1pc3R5JTIwZm9yZXN0JTIwbW9ybmluZ3xlbnwxfDF8fHwxNzkwNjE4MjU5fDA&ixlib=rb-4.1.0&w=1290&h=2796&fit=crop&crop=entropy&q=80&fm=jpg",
       "color": "#262626",
@@ -1767,6 +1871,19 @@
         "sourceLink": "https://unsplash.com/?utm_source=memo_daddy&utm_medium=referral",
         "downloadLocation": "https://api.unsplash.com/photos/FhXU8AZH7hk/download?ixid=M3wxMDg2MTUzfDB8MXxzZWFyY2h8MTR8fGNpdHklMjBuaWdodCUyMHJhaW58ZW58MXwxfHx8MTc5MDYxODI2MHww"
       }
+    },
+    {
+      "id": "aic-36103",
+      "url": "https://www.artic.edu/iiif/2/674d4d6e-7c00-f131-09c0-99884249cdb6/pct:18.51,0,62.97,100/!1290,2796/0/default.jpg",
+      "credit": {
+        "source": "aic",
+        "sourceName": "Art Institute of Chicago",
+        "name": "Katsukawa Shunsho",
+        "link": "https://www.artic.edu/artworks/36103",
+        "sourceLink": "https://www.artic.edu"
+      },
+      "title": "Act Six: Yoichibei's House from the play Chushingura (Treasury of Loyal Retainers)",
+      "detail": "c. 1779/80 · woodblock print"
     },
     {
       "id": "unsplash-9AkciIbQPxw",
@@ -1976,6 +2093,19 @@
       }
     },
     {
+      "id": "aic-29118",
+      "url": "https://www.artic.edu/iiif/2/6578a3c2-81f9-63a0-7663-b6b2c64d963f/pct:21.56,0,56.89,100/!1290,2796/0/default.jpg",
+      "credit": {
+        "source": "aic",
+        "sourceName": "Art Institute of Chicago",
+        "name": "Maximilian Kurzweil",
+        "link": "https://www.artic.edu/artworks/29118",
+        "sourceLink": "https://www.artic.edu"
+      },
+      "title": "The Pillow",
+      "detail": "1903 · print"
+    },
+    {
       "id": "unsplash-Y5yk0m3KTwU",
       "url": "https://images.unsplash.com/photo-1616472992666-a0abcd339f32?ixid=M3wxMDg2MTUzfDB8MXxzZWFyY2h8MTd8fHF1aWV0JTIwcm9vbSUyMHdpbmRvdyUyMGxpZ2h0fGVufDF8MXx8fDE3OTA2MTgyNTl8MA&ixlib=rb-4.1.0&w=1290&h=2796&fit=crop&crop=entropy&q=80&fm=jpg",
       "color": "#404040",
@@ -2181,6 +2311,19 @@
         "sourceLink": "https://unsplash.com/?utm_source=memo_daddy&utm_medium=referral",
         "downloadLocation": "https://api.unsplash.com/photos/lWuAMQGNL7k/download?ixid=M3wxMDg2MTUzfDB8MXxzZWFyY2h8MTF8fG1vdW50YWluJTIwbGFrZSUyMGZvZ3xlbnwxfDF8fHwxNzkwNjE4MjYxfDA"
       }
+    },
+    {
+      "id": "aic-60321",
+      "url": "https://www.artic.edu/iiif/2/573558d0-92ec-89e2-08f6-0a477be2f2fe/pct:0,12.90,100,74.20/!1290,2796/0/default.jpg",
+      "credit": {
+        "source": "aic",
+        "sourceName": "Art Institute of Chicago",
+        "name": "Utagawa Hiroshige",
+        "link": "https://www.artic.edu/artworks/60321",
+        "sourceLink": "https://www.artic.edu"
+      },
+      "title": "Wild Geese Flying Across Full Moon",
+      "detail": "late 1830s · woodblock print"
     },
     {
       "id": "unsplash-3hsZfsLbxzk",
@@ -2405,6 +2548,27 @@
     "ill-niR7EVNXJeE",
     "ill-Bf3LBxQbSWM",
     "ill-APYjdsSpNZo",
-    "ill-lD5fh5NQwqM"
+    "ill-lD5fh5NQwqM",
+    "wellcome-b15862306_EPH_524_0115.JP2",
+    "aic-36119",
+    "wellcome-b15862306_EPH_524_0114.JP2",
+    "aic-60482",
+    "aic-60236",
+    "aic-31614",
+    "aic-61169",
+    "aic-32449",
+    "aic-35825",
+    "aic-32024",
+    "aic-54692",
+    "aic-23913",
+    "aic-35945",
+    "aic-32491",
+    "aic-29221",
+    "aic-48313",
+    "aic-55741",
+    "aic-34172",
+    "aic-55402",
+    "aic-23887",
+    "aic-23860"
   ]
 }
