@@ -60,11 +60,18 @@ function applyState(s) {
 
 // ---- pins: a picture for a specific day
 
+let pinsOpen = false;
+$("pinsToggle").onclick = () => { pinsOpen = !pinsOpen; renderPins(); };
+
 function renderPins() {
   const el = $("pinsList");
   el.innerHTML = "";
   const pins = state.pins ?? [];
-  if (!pins.length) { el.textContent = "none yet — pick a photo, type a date on the right, Pin"; return; }
+  const holidays = pins.filter((p) => p.holiday).length;
+  $("pinsSummary").textContent = pins.length ? `${pins.length} pinned (${holidays} holidays, ${pins.length - holidays} by hand)` : "none yet — pick a photo, type a date on the right, Pin";
+  $("pinsToggle").textContent = `${pinsOpen ? "▾" : "▸"} pinned days`;
+  el.hidden = !pinsOpen;
+  if (!pins.length || !pinsOpen) return;
   for (const p of pins) {
     const chip = document.createElement("span");
     chip.className = "pin";

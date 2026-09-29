@@ -233,47 +233,62 @@ async function holidayDates() {
   return out;
 }
 
-/// Candidate pools per holiday date, kept for the life of the process so
-/// a re-roll is a free draw from the last search instead of a new call.
+/// Per holiday date: the pictures found so far, which of them have been
+/// shown (pinned) already, and the next page to fetch. A re-roll walks
+/// through every unseen match before fetching more, and only wraps
+/// around when the libraries have nothing else.
 const holidayPools = new Map();
 
-async function searchForHoliday(h) {
-  const pool = [];
+async function fetchHolidayPage(h, page) {
+  const found = [];
   const problems = [];
+  let more = false;
   for (const src of h.sources) {
     try {
-      let entries;
+      let entries, srcMore = false;
       if (src === "unsplash") {
-        const r = await fetchPage({ query: h.query }, 1, key, PER_PAGE); rateRemaining = r.remaining; entries = r.photos;
+        const r = await fetchPage({ query: h.query }, page, key, PER_PAGE); rateRemaining = r.remaining; entries = r.photos; srcMore = r.more;
       } else if (SOURCES[src]) {
-        const r = await SOURCES[src].page(h.query, 1, PER_PAGE, { api, entry, key }); entries = r.entries;
+        const r = await SOURCES[src].page(h.query, page, PER_PAGE, { api, entry, key }); entries = r.entries; srcMore = r.more;
         if (r.remaining != null) rateRemaining = r.remaining;
       } else continue;
-      pool.push(...entries);
+      found.push(...entries);
+      more ||= srcMore;
     } catch (err) {
       problems.push(`${src}: ${err.message}`);
       console.warn(`holiday ${h.name}: ${src} failed: ${err.message}`);
     }
   }
-  return { pool, problems };
+  return { found, more, problems };
 }
 
-/// One random portrait candidate for a holiday, skipping rejected ids,
-/// ids pinned elsewhere, and `avoidID`. Draws from the cached pool when
-/// it still has unused pictures; searches again only when it runs dry.
+/// One candidate for a holiday: a random unseen match, skipping rejected
+/// ids and pictures pinned to other days. Fetches the next page when the
+/// pool is exhausted; wraps to the beginning only when there is no more.
 async function pickForHoliday(h, avoidID) {
-  const taken = new Set([...picks.rejected, ...picks.pins.map((p) => p.image.id), avoidID].filter(Boolean));
-  let cached = holidayPools.get(h.date);
-  let usable = (cached ?? []).filter((e) => !taken.has(e.id));
+  const taken = new Set([...picks.rejected, ...picks.pins.filter((p) => p.date !== h.date).map((p) => p.image.id)]);
+  let pool = holidayPools.get(h.date);
+  if (!pool || pool.query !== h.query) pool = { query: h.query, entries: [], shown: new Set(), nextPage: 1, more: true };
+  holidayPools.set(h.date, pool);
+  if (avoidID) pool.shown.add(avoidID);
+  const usable = () => pool.entries.filter((e) => !taken.has(e.id) && !pool.shown.has(e.id));
   let problems = [];
-  if (!usable.length) {
-    const r = await searchForHoliday(h);
-    holidayPools.set(h.date, r.pool);
-    usable = r.pool.filter((e) => !taken.has(e.id));
-    problems = r.problems;
+  if (!usable().length && pool.more && pool.nextPage <= 5) {
+    const r = await fetchHolidayPage(h, pool.nextPage++);
+    const known = new Set(pool.entries.map((e) => e.id));
+    pool.entries.push(...r.found.filter((e) => !known.has(e.id)));
+    pool.more = r.more; problems = r.problems;
   }
-  if (!usable.length) return { chosen: null, reason: problems.length ? problems.join("; ") : `no portrait matches for "${h.query}"` };
-  return { chosen: usable[Math.floor(Math.random() * usable.length)], reason: null };
+  if (!usable().length && pool.entries.some((e) => !taken.has(e.id))) {
+    // Every match has had its turn: start the walk again.
+    pool.shown.clear();
+    if (avoidID) pool.shown.add(avoidID);
+  }
+  const options = usable();
+  if (!options.length) return { chosen: null, reason: problems.length ? problems.join("; ") : `no portrait matches for "${h.query}"` };
+  const chosen = options[Math.floor(Math.random() * options.length)];
+  pool.shown.add(chosen.id);
+  return { chosen, reason: null };
 }
 
 const server = http.createServer((req, res) => {

@@ -64,8 +64,10 @@
   .phone .nav .dot { width: 5px; height: 5px; border-radius: 50%; top: 38px; left: 66px; }
   .phone .status { position: absolute; top: 18px; left: 52px; font-size: 16px; font-weight: 600; }
 
-  footer { border-top: 1px solid var(--line); background: var(--panel); padding: 10px 16px; display: grid; grid-template-rows: auto auto auto auto auto; gap: 6px; }
-  .pin { display: inline-flex; gap: 4px; align-items: center; padding: 1px 6px; border: 1px solid var(--line); border-radius: 6px; margin-right: 6px; cursor: pointer; }
+  footer { border-top: 1px solid var(--line); background: var(--panel); padding: 10px 16px; display: grid; grid-auto-rows: auto; gap: 6px; }
+  .pins { display: flex; flex-wrap: wrap; gap: 4px 6px; font-size: 12px; color: var(--muted); max-height: 96px; overflow-y: auto; }
+  .pins[hidden] { display: none; }
+  .pin { display: inline-flex; gap: 4px; align-items: center; padding: 1px 6px; border: 1px solid var(--line); border-radius: 6px; cursor: pointer; white-space: nowrap; }
   .pin b { font-weight: 600; }
   .pin .x { color: var(--reject); font-weight: 700; padding-left: 4px; }
   .pin .reroll { font: 600 11px -apple-system, system-ui, sans-serif; padding: 0 6px; margin-left: 4px; border-radius: 4px; border: 1px solid var(--accent); color: var(--accent); background: transparent; cursor: pointer; }
@@ -137,9 +139,11 @@
     <button id="spread" class="small" title="slot the picks kept since the last shuffle or spread evenly into the existing order, leaving everything else where it is">Spread new picks</button>
     <span class="spacer"></span> <span id="queueCount"></span></div>
   <div class="strip" id="kept"></div>
-  <div class="strip-head" id="pinsRow"><b>pinned days</b>
+  <div class="strip-head" id="pinsRow">
+    <button id="pinsToggle" class="small" style="margin-left:0" title="show or hide the pinned days">▸ pinned days</button>
     <button id="autoHolidays" class="small" title="for every holiday in holidays.json without a pin, search its sources and pin a random match (one Unsplash call per holiday)">Auto-pin holidays</button>
-    <span id="pinsList">none yet</span></div>
+    <span id="pinsSummary"></span></div>
+  <div id="pinsList" class="pins" hidden></div>
   <div class="strip-head"><b id="queueLabel">results</b> <span id="queueNote">search above, or load sources.json</span></div>
   <div class="strip" id="queue"></div>
 </footer>
