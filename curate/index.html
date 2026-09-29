@@ -20,6 +20,7 @@
   header h1 { font-size: 15px; margin: 0 8px 0 0; font-weight: 600; }
   header form { display: flex; gap: 6px; }
   input[type=text] { font: inherit; padding: 6px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--ink); min-width: 220px; }
+  select { font: inherit; padding: 6px 8px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); color: var(--ink); }
   button { font: inherit; padding: 6px 12px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel); color: var(--ink); cursor: pointer; }
   button:hover { border-color: var(--muted); }
   button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
@@ -65,9 +66,9 @@
   .strip-head { display: flex; align-items: baseline; gap: 10px; font-size: 13px; color: var(--muted); }
   .strip-head b { color: var(--ink); }
   .strip[hidden] { display: none; }
-  .strip { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 6px; min-height: 96px; align-items: center; }
+  .strip { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 6px; min-height: 84px; align-items: center; }
   .strip .empty-note { color: var(--muted); font-size: 13px; padding: 0 4px; }
-  .thumb { flex: none; width: 42px; height: 90px; border-radius: 6px; background-size: cover; background-position: center; cursor: pointer; border: 2px solid transparent; position: relative; }
+  .thumb { flex: none; width: 36px; height: 78px; border-radius: 6px; background-size: cover; background-position: center; cursor: pointer; border: 2px solid transparent; position: relative; }
   .thumb.current { border-color: var(--accent); }
   .thumb.kept::after { content: ""; position: absolute; right: 2px; top: 2px; width: 8px; height: 8px; border-radius: 50%; background: var(--keep); }
   /* source badge, bottom-left of every thumb: white U = Unsplash, red AIC, gold MET */
@@ -84,7 +85,13 @@
 <body>
 <header>
   <h1>Daily curation</h1>
-  <form id="search"><input id="q" type="text" placeholder="search Unsplash · aic: koson fish · met: carp · collection:123" autocomplete="off" style="min-width:340px"><button class="primary" type="submit">Find</button></form>
+  <select id="source" title="which library to search, and which picks to show in the strip below">
+    <option value="all">All sources</option>
+    <option value="unsplash">Unsplash</option>
+    <option value="aic">Art Institute of Chicago</option>
+    <option value="met">The Met</option>
+  </select>
+  <form id="search"><input id="q" type="text" placeholder="search… (or prefix: aic: hokusai · met: carp dept:6 · collection:123)" autocomplete="off" style="min-width:320px"><button class="primary" type="submit">Find</button></form>
   <button id="loadSources" title="every query and collection in sources.json">Load sources.json</button>
   <button id="reviewKept" title="step through what's already kept">Review kept</button>
   <span class="spacer"></span>

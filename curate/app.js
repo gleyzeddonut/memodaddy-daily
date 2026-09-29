@@ -32,6 +32,9 @@ function badge(entry) {
   b.title = entry.credit?.sourceName ?? (src === "unsplash" ? "Unsplash" : src);
   return b;
 }
+/// The header's source picker: scopes searches and filters the kept strip.
+const selectedSource = () => $("source").value;
+const SOURCE_PREFIX = { unsplash: "", aic: "aic: ", met: "met: " };
 /// Mirrors DailyCredit.line in the app.
 function creditLine(c) {
   if (!c) return "";
@@ -56,7 +59,9 @@ function renderCounts() {
   const perSource = {};
   for (const e of state.kept) { const k = sourceOf(e); perSource[k] = (perSource[k] ?? 0) + 1; }
   const parts = Object.entries(perSource).map(([k, n]) => `${n} ${SOURCE_BADGE[k] ?? k}`).join(" · ");
-  $("keptCount").textContent = `${state.kept.length}${parts ? ` (${parts})` : ""}`;
+  const sel = selectedSource();
+  $("keptCount").textContent = sel === "all" ? `${state.kept.length}${parts ? ` (${parts})` : ""}`
+    : `${perSource[sel] ?? 0} ${SOURCE_BADGE[sel] ?? sel} of ${state.kept.length}`;
   $("queueCount").textContent = queue.length ? `${Math.max(index, 0) + 1} / ${queue.length} in queue` : "queue empty — search above";
   $("rate").textContent = state.rateRemaining == null ? "" : `Unsplash: ${state.rateRemaining} requests left this hour`;
 }
@@ -188,7 +193,14 @@ function renderQueue() {
 function renderKept() {
   const el = $("kept");
   el.innerHTML = "";
-  state.kept.forEach((e) => {
+  const sel = selectedSource();
+  const shown = sel === "all" ? state.kept : state.kept.filter((e) => sourceOf(e) === sel);
+  if (!shown.length) {
+    const n = document.createElement("div"); n.className = "empty-note";
+    n.textContent = sel === "all" ? "nothing kept yet" : `nothing kept from ${SOURCE_BADGE[sel] ?? sel} yet`;
+    el.appendChild(n);
+  }
+  shown.forEach((e) => {
     const d = document.createElement("div");
     d.className = "thumb kept" + (shown?.id === e.id ? " current" : "");
     d.draggable = true;
@@ -264,8 +276,10 @@ function dedupe(entries) {
 
 $("search").onsubmit = async (ev) => {
   ev.preventDefault();
-  const term = $("q").value.trim();
+  let term = $("q").value.trim();
   if (!term) return;
+  const sel = selectedSource();
+  if (sel !== "all" && !/^[a-z]+:/i.test(term)) term = SOURCE_PREFIX[sel] + term;
   try {
     const found = await search(term);
     const fresh = found.filter((e) => e.status === "new");
@@ -288,7 +302,11 @@ $("loadSources").onclick = async () => {
   } catch (err) { alert(err.message); }
 };
 
-$("reviewKept").onclick = () => setQueue([...state.kept], 0, true);
+$("reviewKept").onclick = () => {
+  const sel = selectedSource();
+  setQueue(sel === "all" ? [...state.kept] : state.kept.filter((e) => sourceOf(e) === sel), 0, true);
+};
+$("source").onchange = () => { renderKept(); renderCounts(); };
 
 $("btnKeep").onclick = () => decide("keep");
 $("btnReject").onclick = () => decide("reject");
