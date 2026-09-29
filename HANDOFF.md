@@ -221,6 +221,12 @@ succeeds, which is fine once main matches.
   `DailyBackgrounds.previewControlsEnabled` true, a `→` top-right on the
   front page steps through the manifest in day order without pinging
   Unsplash. Dan intends to turn it off for launch.
+- **Prefetch:** in any theme, once a day, the app fetches the manifest
+  and caches today's and tomorrow's photo plus their colours
+  (`DailyBackgrounds.prefetch`), so switching to Daily is instant and the
+  bundled cat no longer flashes first (it only shows when a first run is
+  offline). Traffic per phone per day: one manifest fetch + up to two
+  image downloads from the CDN; still one API ping.
 - **Launch:** the app shows the cached photo and its stored palette
   synchronously in `DailyBackgrounds.init` (today's, else the last one
   shown), so the first frame isn't white; colours are persisted per
