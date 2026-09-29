@@ -78,7 +78,7 @@ async function show(entry) {
     <div class="wordmark memo" style="color:${p.textPrimary}">memo</div>
     <div class="wordmark daddy" style="color:${p.textPrimary}">daddy</div>
     <div class="tuner" style="color:${p.linkAccent}">tuner</div>
-    <div class="ring" style="border-color:${p.recordRing}"><div class="fill" style="background:${p.recordRed}"></div></div>
+    <div class="ring" style="border-color:${p.recordRing}"><div class="fill" style="background:${p.recordFill}"></div></div>
     <div class="credit" style="color:${p.textPrimary}">Photo by ${entry.credit?.name ?? "?"} on Unsplash</div>
     <div class="nav">
       <span style="left:38px;color:${p.textPrimary}">capture</span>
@@ -87,12 +87,12 @@ async function show(entry) {
       <span style="left:204px;color:${p.textSecondary}">favorites</span>
       <span style="left:293px;color:${p.textSecondary}">settings</span>
     </div>`;
-  $("swatches").innerHTML = [["bg", p.background], ["card", p.card], ["accent", p.accent], ["tuner", p.linkAccent]]
+  $("swatches").innerHTML = [["bg", p.background], ["card", p.card], ["accent", p.accent], ["tuner", p.linkAccent], ["ring", p.recordRing], ["rec", p.recordFill]]
     .map(([n, c]) => `<div class="swatch" style="background:${c}" title="${c}"><span>${n}</span></div>`).join("");
   const c = p.colors;
   const linkNote = p.linkFallback ? ` · <b style="color:var(--reject)">tuner fell back to the text colour</b> (mixed patch; the fade under it carries it)`
     : p.linkAdjusted ? " · tuner re-depthed to read over the photo" : "";
-  $("paletteMeta").innerHTML = `scheme <b>${p.dark ? "dark" : "light"}</b> (luma ${c.averageLuma.toFixed(2)}) · accent hue <b>${Math.round(c.accentHue * 360)}°</b> sat ${c.accentSaturation.toFixed(2)}${c.vivid ? "" : " · <b>no vivid colour</b>, muted accent"}<br>tuner contrast over the photo (worst of mean/dark/light ends) <b>${p.linkContrast.toFixed(1)}:1</b>${linkNote}`;
+  $("paletteMeta").innerHTML = `scheme <b>${p.dark ? "dark" : "light"}</b> (luma ${c.averageLuma.toFixed(2)}) · accent hue <b>${Math.round(c.accentHue * 360)}°</b> sat ${c.accentSaturation.toFixed(2)}${c.vivid ? "" : " · <b>no vivid colour</b>, muted accent"}<br>tuner contrast over the photo (worst of mean/dark/light ends) <b>${p.linkContrast.toFixed(1)}:1</b>${linkNote}<br>record ring over its own patch <b>${p.ringContrast == null ? "?" : p.ringContrast.toFixed(1) + ":1"}</b>${p.fillFallback ? " · <b>red kept as-is</b> (no red clears the patch; ring carries it)" : p.fillAdjusted ? " · red re-depthed" : ""}`;
 }
 
 // ---- queue

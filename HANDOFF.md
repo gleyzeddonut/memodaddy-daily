@@ -148,6 +148,16 @@ without a keep.
   radial gradients on the mock) and prints the worst-case contrast,
   flagging a fall-back. Photos that pass on average but look busy behind the
   link are still a taste call — reject them.
+- Record button (mumo `Theme.daily`, `DailyColors.buttonRegion…`): the
+  ring and the red fill are judged against the patch behind the button
+  (92pt ring, bottom edge 128pt up) on their own, to `Theme.graphicTarget`
+  3:1. Ring = near-neutral in the photo's hue pushed light/dark; fill =
+  the scheme's red re-depthed but never paler than 0.55 saturation or
+  deeper than 0.6 brightness, else the base red (ring carries it). The
+  page mirrors it (`GRAPHIC_TARGET`, ring/rec swatches, "record ring
+  over its own patch N:1"). Stored colours are keyed
+  `dailyColors.v<DailyColors.schemaVersion>.<id>`; bump the version when
+  the extractor measures something new or old phones keep stale colours.
 - `Mumo/Views/FrontPageView.swift`: `dailyImage`, `dailyCredit` inputs;
   `dailyBackdrop` (photo + page-colour gradient, 18% while recording);
   `creditLine` (11pt medium, 22% opacity, right-aligned with 20pt
