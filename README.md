@@ -25,20 +25,14 @@ the app, light or dark scheme included). The search box takes:
   artist, title or subject, so `aic: hokusai` is precise)
 - `met: carp dept:6` → the Met's open-access works (no key; its search
   is loose, `dept:N` narrows it — 6 Asian Art, 9 Drawings and Prints)
-- `loc: theatre` → the Library of Congress WPA poster collection
-  (public domain, no key, ~950 posters, images ~1024px wide)
-- `wellcome: botanical` → Wellcome Collection images (no key, only
-  CC BY and public-domain ones are asked for; the artist is often
-  unknown, so the work's title stands in on the credit)
 
 or pick a library in the dropdown and press **Browse** (or just pick it:
 that browses straight away) to see its pictures with no keywords at all —
 every library draws a genuinely random batch each time (Unsplash's
-random endpoint; a random broad word and page for illustrations and
-Wellcome; a random id window for the Art Institute; random object ids
-for the Met; a random page of the WPA posters). **More** loads another
-batch. "All sources" mixes all six in random order so you can compare
-their character. Or press
+random endpoint; a random broad word and page for illustrations; a
+random id window for the Art Institute; random object ids for the
+Met). **More** loads another batch. "All sources" mixes all four in
+random order so you can compare their character. Or press
 **Load sources.json** to queue every query listed there. Museum
 pieces are credited "Artist · Library" in the app, both linked; only
 portrait or square works are offered. Then:

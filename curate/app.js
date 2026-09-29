@@ -19,8 +19,8 @@ const proxied = (url, w, h) => `/img?u=${encodeURIComponent(sized(url, w, h))}`;
 const stageURL = (e) => proxied(e.url, 780, 1690);
 const thumbURL = (e) => proxied(e.url, 84, 180);
 /// Which library an entry came from, by id prefix.
-const SOURCE_BADGE = { unsplash: "U", ill: "ILL", aic: "AIC", met: "MET", loc: "LOC", wellcome: "WC" };
-const ALL_SOURCES = ["unsplash", "ill", "aic", "met", "loc", "wellcome"];
+const SOURCE_BADGE = { unsplash: "U", ill: "ILL", aic: "AIC", met: "MET" };
+const ALL_SOURCES = ["unsplash", "ill", "aic", "met"];
 function sourceOf(entry) {
   const m = String(entry.id).match(/^([a-z]+)-/);
   return m ? m[1] : "other";
@@ -35,7 +35,7 @@ function badge(entry) {
 }
 /// The header's source picker: scopes searches and filters the kept strip.
 const selectedSource = () => $("source").value;
-const SOURCE_PREFIX = { unsplash: "", ill: "ill: ", aic: "aic: ", met: "met: ", loc: "loc: ", wellcome: "wellcome: " };
+const SOURCE_PREFIX = { unsplash: "", ill: "ill: ", aic: "aic: ", met: "met: " };
 /// Mirrors DailyCredit.line in the app.
 function creditLine(c) {
   if (!c) return "";

@@ -19,14 +19,6 @@ export function phoneRegion(w, h) {
 }
 
 const rand = (n) => Math.floor(Math.random() * n);
-/// "clough, stanley thomas" → "Stanley Thomas Clough"; anything else just capitalised.
-function personName(raw) {
-  const cap = (t) => t.replace(/\b\w/g, (c) => c.toUpperCase());
-  const [last, first] = raw.split(",").map((x) => x.trim());
-  return first ? cap(`${first} ${last}`) : cap(raw);
-}
-const pick = (list) => list[rand(list.length)];
-
 export const SOURCES = {
   // Unsplash illustrations — artist-uploaded, same license and API key as
   // the photos. Credit reads "Name · Unsplash" in the app; the download
@@ -54,102 +46,6 @@ export const SOURCES = {
     entry(p, ctx) {
       const e = ctx.entry(p);
       return { ...e, id: `ill-${p.id}`, credit: { ...e.credit, sourceName: "Unsplash" } };
-    },
-  },
-
-  // Library of Congress — the WPA poster collection (public domain, no
-  // key). Largest image the search JSON offers is ~1024px wide.
-  loc: {
-    label: "Library of Congress posters",
-    idPrefix: "loc-",
-    imageHost: "tile.loc.gov",
-    _url(query, page, perPage) {
-      const u = new URL("https://www.loc.gov/collections/works-progress-administration-posters/");
-      if (query) u.searchParams.set("q", query);
-      u.searchParams.set("fo", "json"); u.searchParams.set("c", String(perPage)); u.searchParams.set("sp", String(page));
-      return u;
-    },
-    _entries(results) {
-      const out = [];
-      for (const r of results) {
-        if (r.access_restricted) continue;
-        const best = (r.image_url ?? []).map((u) => ({ u, w: Number(u.match(/w=(\d+)/)?.[1] ?? 0), h: Number(u.match(/h=(\d+)/)?.[1] ?? 0) }))
-          .filter((x) => x.w && x.h).sort((a, b) => b.w - a.w)[0];
-        if (!best || best.h < best.w) continue;
-        const who = (r.contributor ?? []).find((c) => !/federal|works progress|administration|\(u\.s\.\)/i.test(c));
-        out.push({
-          id: `loc-${String(r.id).replace(/\W+/g, "-").replace(/^-|-$/g, "").slice(-40)}`,
-          url: best.u.split("#")[0],
-          title: r.title, detail: [r.date?.slice(0, 4), "WPA poster"].filter(Boolean).join(" · "),
-          credit: { source: "loc", sourceName: "Library of Congress", name: who ? personName(who) : "WPA Federal Art Project",
-                    link: r.id?.startsWith("http") ? r.id : r.url, sourceLink: "https://www.loc.gov/collections/works-progress-administration-posters/" },
-        });
-      }
-      return out;
-    },
-    async page(query, page, perPage) {
-      const res = await fetch(this._url(query, page, perPage), { headers: { "user-agent": "memodaddy-curation" } });
-      if (!res.ok) throw new Error(`LoC HTTP ${res.status}`);
-      const d = await res.json();
-      return { entries: this._entries(d.results ?? []), more: page < (d.pagination?.total ?? 1) };
-    },
-    async browse(perPage) {
-      const first = await fetch(this._url("", 1, perPage), { headers: { "user-agent": "memodaddy-curation" } });
-      if (!first.ok) throw new Error(`LoC HTTP ${first.status}`);
-      const d1 = await first.json();
-      const page = 1 + rand(d1.pagination?.total ?? 1);
-      const d = page === 1 ? d1 : await (await fetch(this._url("", page, perPage), { headers: { "user-agent": "memodaddy-curation" } })).json();
-      return { entries: this._entries(d.results ?? []), more: true };
-    },
-  },
-
-  // Wellcome Collection — free, no key, IIIF (crops server-side), only
-  // CC BY and public-domain images asked for. Artist is often missing, so
-  // the work's title stands in on the credit line.
-  wellcome: {
-    label: "Wellcome Collection",
-    idPrefix: "wellcome-",
-    imageHost: "iiif.wellcomecollection.org",
-    _url(query, page, perPage) {
-      const u = new URL("https://api.wellcomecollection.org/catalogue/v2/images");
-      u.searchParams.set("query", query); u.searchParams.set("locations.license", "cc-by,pdm");
-      u.searchParams.set("pageSize", String(perPage)); u.searchParams.set("page", String(page));
-      u.searchParams.set("include", "source.contributors");
-      return u;
-    },
-    _entries(results) {
-      const out = [];
-      for (const r of results) {
-        const imageId = r.thumbnail?.url?.match(/\/image\/([^/]+)\//)?.[1];
-        if (!imageId) continue;
-        const aspect = r.aspectRatio ?? 1; // width / height
-        if (aspect > 1) continue;
-        const region = phoneRegion(aspect * 1000, 1000);
-        const who = r.source?.contributors?.[0]?.agent?.label;
-        out.push({
-          id: `wellcome-${imageId}`,
-          url: `https://iiif.wellcomecollection.org/image/${imageId}/${region}/!1290,2796/0/default.jpg`,
-          title: r.source?.title, detail: r.locations?.[0]?.license?.id === "pdm" ? "public domain" : "CC BY",
-          credit: { source: "wellcome", sourceName: "Wellcome Collection", name: who || (r.source?.title || "Wellcome Collection").slice(0, 60),
-                    link: `https://wellcomecollection.org/works/${r.source?.id}`, sourceLink: "https://wellcomecollection.org" },
-        });
-      }
-      return out;
-    },
-    async page(query, page, perPage) {
-      const res = await fetch(this._url(query, page, perPage));
-      if (!res.ok) throw new Error(`Wellcome HTTP ${res.status}`);
-      const d = await res.json();
-      return { entries: this._entries(d.results ?? []), more: page < (d.totalPages ?? 1) };
-    },
-    async browse(perPage) {
-      const query = pick(["poster", "print", "drawing", "painting", "illustration", "engraving", "watercolour", "advertisement"]);
-      const first = await fetch(this._url(query, 1, perPage));
-      if (!first.ok) throw new Error(`Wellcome HTTP ${first.status}`);
-      const d1 = await first.json();
-      const page = 1 + rand(Math.min(d1.totalPages ?? 1, 200));
-      const d = page === 1 ? d1 : await (await fetch(this._url(query, page, perPage))).json();
-      return { entries: this._entries(d.results ?? []), more: true };
     },
   },
 

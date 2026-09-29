@@ -110,13 +110,12 @@ and Openverse would need free API keys and are not wired yet. AIC has
 only one public-domain Ohara Koson with an image; Hasui isn't marked
 public domain there — Hokusai/Hiroshige/Harunobu are plentiful.
 
-**Six libraries** (Sep 28, late): `ill` (Unsplash illustrations via
+**Four libraries** (Sep 28, late): `ill` (Unsplash illustrations via
 `/search/illustrations`, same key; adapters get `ctx = { api, entry,
-key }`), `loc` (LoC WPA posters collection JSON, largest `image_url`
-~1024px, `personName` flips "last, first"), `wellcome` (catalogue v2
-`images`, `locations.license=cc-by,pdm`, IIIF crop from the thumbnail's
-image id, `aspectRatio` = w/h for the portrait filter). Badges: U · ILL ·
-AIC · MET · LOC · WC. AIC ignores `random_score` and caps searches at
+key }`) joined `unsplash`, `aic`, `met`. Library of Congress WPA
+posters and Wellcome Collection were wired and then removed the same
+night — Dan: "posters are not the right vibe" (the adapters are in git
+history at 0551ef2 if ever wanted). Badges: U · ILL · AIC · MET. AIC ignores `random_score` and caps searches at
 1,000 results, so its browse uses a random `id` window of 40k plus a
 random page — verified to differ call to call.
 
