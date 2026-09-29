@@ -47,6 +47,7 @@ async function state() {
     kept: picks.kept,
     rejected: picks.rejected,
     settledIDs: picks.settledIDs ?? null,
+    pins: picks.pins,
     handAdded: (manifest.images ?? []).filter((e) => !isCurated(e)),
     libraries: Object.fromEntries(Object.entries(SOURCES).map(([k, v]) => [k, v.label])),
     sources: await readJSON(sourcesPath, { collections: [], queries: [] }),
@@ -149,6 +150,23 @@ async function handle(req, res) {
       case "/api/clear": // back to undecided
         picks.kept = picks.kept.filter((k) => k.id !== body.id);
         picks.rejected = picks.rejected.filter((id) => id !== body.id);
+        break;
+      case "/api/pin": {
+        // {date: "MM-DD" | "YYYY-MM-DD", entry}: one picture per date, from any library.
+        const date = String(body.date ?? "").trim();
+        const e = body.entry;
+        let host; try { host = new URL(e?.url ?? "").hostname; } catch { host = ""; }
+        if (!/^(\d{4}-)?\d{2}-\d{2}$/.test(date)) return send(res, 400, { error: "date must be MM-DD or YYYY-MM-DD" });
+        if (!(e?.id && isCurated(e) && typeof e.url === "string" && e.url.startsWith("https://") && imageHosts.has(host))) {
+          return send(res, 400, { error: "not an entry from a known library" });
+        }
+        picks.pins = picks.pins.filter((p) => p.date !== date);
+        picks.pins.push({ date, image: { id: e.id, url: e.url, color: e.color, credit: e.credit, title: e.title, detail: e.detail } });
+        picks.pins.sort((a, b) => a.date.slice(-5).localeCompare(b.date.slice(-5)) || a.date.localeCompare(b.date));
+        break;
+      }
+      case "/api/unpin":
+        picks.pins = picks.pins.filter((p) => p.date !== body.date);
         break;
       case "/api/order": {
         const byId = new Map(picks.kept.map((k) => [k.id, k]));

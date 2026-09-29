@@ -90,7 +90,7 @@ export { isCurated, SOURCES, parseTerm } from "./sources.mjs";
 /// `rejected` holds ids that must not come back.
 export async function readPicks() {
   const picks = await readJSON(picksPath, { kept: [], rejected: [] });
-  picks.kept ??= []; picks.rejected ??= [];
+  picks.kept ??= []; picks.rejected ??= []; picks.pins ??= [];
   if (!Array.isArray(picks.settledIDs)) delete picks.settledIDs;
   return picks;
 }
@@ -102,6 +102,7 @@ export async function buildManifest(picks) {
   const existing = await readJSON(manifestPath, { images: [] });
   const handAdded = (existing.images ?? []).filter((e) => !isCurated(e));
   const manifest = { images: [...handAdded, ...picks.kept] };
+  if (picks.pins?.length) manifest.pins = picks.pins.map((p) => ({ date: p.date, image: p.image }));
   await writeJSON(manifestPath, manifest);
   return manifest;
 }

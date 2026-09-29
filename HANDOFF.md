@@ -129,6 +129,14 @@ request each, so slow). The page browses when the source picker
 changes, **Browse** reloads, **More** appends. Dan asked for this
 because he wanted to see each library's character without keywords.
 
+**Pins** (Sep 28, late night): `picks.json.pins = [{ date, image }]`,
+written by `POST /api/pin {date, entry}` / `/api/unpin {date}` (date
+must be `MM-DD` or `YYYY-MM-DD`; one per date; entry from any known
+library, need not be kept) and copied into `manifest.json.pins` by the
+builder. The app (mumo ≥ the pins commit, i.e. build 37+) shows the
+pinned picture on that day instead of the rotation. Page: "Pin to a
+day" in the side panel, "pinned days" chips above the results row.
+
 `sources.json` is now just a list the **Load sources.json** button can
 queue (queries and collection ids); it no longer feeds the manifest by
 itself. There is no automatic pull any more: nothing enters the rotation

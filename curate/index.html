@@ -64,7 +64,10 @@
   .phone .nav .dot { width: 5px; height: 5px; border-radius: 50%; top: 38px; left: 66px; }
   .phone .status { position: absolute; top: 18px; left: 52px; font-size: 16px; font-weight: 600; }
 
-  footer { border-top: 1px solid var(--line); background: var(--panel); padding: 10px 16px; display: grid; grid-template-rows: auto auto auto auto; gap: 6px; }
+  footer { border-top: 1px solid var(--line); background: var(--panel); padding: 10px 16px; display: grid; grid-template-rows: auto auto auto auto auto; gap: 6px; }
+  .pin { display: inline-flex; gap: 4px; align-items: center; padding: 1px 6px; border: 1px solid var(--line); border-radius: 6px; margin-right: 6px; cursor: pointer; }
+  .pin b { font-weight: 600; }
+  .pin .x { color: var(--reject); font-weight: 700; padding-left: 4px; }
   .strip-head { display: flex; align-items: baseline; gap: 10px; font-size: 13px; color: var(--muted); }
   .strip-head b { color: var(--ink); }
   .strip[hidden] { display: none; }
@@ -113,6 +116,12 @@
       <button id="btnSkip">Skip <kbd>space</kbd></button>
       <button class="keep" id="btnKeep">Keep <kbd>→</kbd></button>
     </div>
+    <h2>Pin to a day</h2>
+    <div class="actions" style="align-items:center">
+      <input id="pinDate" type="text" placeholder="MM-DD (yearly) or YYYY-MM-DD" style="flex:1;min-width:0">
+      <button id="btnPin" style="flex:0 0 auto">Pin</button>
+    </div>
+    <div class="meta">A pinned picture shows on that day instead of the rotation, every year for MM-DD. It need not be kept.</div>
     <h2>Palette the app will derive</h2>
     <div class="swatches" id="swatches"></div>
     <div class="meta" id="paletteMeta"></div>
@@ -126,6 +135,7 @@
     <button id="spread" class="small" title="slot the picks kept since the last shuffle or spread evenly into the existing order, leaving everything else where it is">Spread new picks</button>
     <span class="spacer"></span> <span id="queueCount"></span></div>
   <div class="strip" id="kept"></div>
+  <div class="strip-head" id="pinsRow"><b>pinned days</b> <span id="pinsList">none yet</span></div>
   <div class="strip-head"><b id="queueLabel">results</b> <span id="queueNote">search above, or load sources.json</span></div>
   <div class="strip" id="queue"></div>
 </footer>

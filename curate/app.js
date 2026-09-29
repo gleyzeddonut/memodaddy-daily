@@ -55,7 +55,36 @@ function applyState(s) {
   renderKept();
   renderCounts();
   updateSpreadButton();
+  renderPins();
 }
+
+// ---- pins: a picture for a specific day
+
+function renderPins() {
+  const el = $("pinsList");
+  el.innerHTML = "";
+  const pins = state.pins ?? [];
+  if (!pins.length) { el.textContent = "none yet — pick a photo, type a date on the right, Pin"; return; }
+  for (const p of pins) {
+    const chip = document.createElement("span");
+    chip.className = "pin";
+    chip.innerHTML = `<b>${p.date}</b> ${p.image.credit?.name ?? p.image.id}`;
+    chip.title = `${creditLine(p.image.credit)} — click to view`;
+    chip.onclick = () => { shown = p.image; show(p.image); $("pinDate").value = p.date; };
+    const x = document.createElement("span");
+    x.className = "x"; x.textContent = "×"; x.title = `unpin ${p.date}`;
+    x.onclick = async (ev) => { ev.stopPropagation(); applyState(await api("/api/unpin", { date: p.date })); };
+    chip.appendChild(x);
+    el.appendChild(chip);
+  }
+}
+$("btnPin").onclick = async () => {
+  if (!shown) return alert("show a picture first");
+  const date = $("pinDate").value.trim();
+  if (!/^(\d{4}-)?\d{2}-\d{2}$/.test(date)) return alert("date must be MM-DD (every year) or YYYY-MM-DD (once)");
+  try { applyState(await api("/api/pin", { date, entry: shown })); } catch (err) { alert(err.message); }
+};
+$("pinDate").addEventListener("keydown", (ev) => { if (ev.key === "Enter") { ev.preventDefault(); $("btnPin").click(); } });
 
 function renderCounts() {
   const perSource = {};

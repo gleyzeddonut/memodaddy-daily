@@ -47,6 +47,13 @@ portrait or square works are offered. Then:
   kept since the last shuffle or spread evenly into the existing order
   without moving anything else.
 
+**Pin to a day**: with any picture showing, type a date in the right-hand
+panel — `10-31` for every year, or `2026-12-25` for once — and press Pin.
+That picture shows on that day instead of the rotation; it need not be
+kept. Pinned days are listed above the results row (click to view, × to
+unpin). One picture per date. Needs the app from build 37 on; older
+builds ignore pins.
+
 Every decision writes `picks.json` and rebuilds `manifest.json` on the
 spot, so when you're done it's just:
 
