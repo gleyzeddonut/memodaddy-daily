@@ -19,6 +19,8 @@ export function phoneRegion(w, h) {
 }
 
 const rand = (n) => Math.floor(Math.random() * n);
+const pick = (list) => list[rand(list.length)];
+
 export const SOURCES = {
   // Unsplash illustrations — artist-uploaded, same license and API key as
   // the photos. Credit reads "Name · Unsplash" in the app; the download
