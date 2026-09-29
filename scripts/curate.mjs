@@ -175,9 +175,21 @@ async function handle(req, res) {
   }
 }
 
-http.createServer((req, res) => {
+const server = http.createServer((req, res) => {
   handle(req, res).catch((err) => { console.error(err); if (!res.headersSent) send(res, 500, { error: err.message }); });
-}).listen(PORT, "127.0.0.1", () => {
+});
+server.on("error", (err) => {
+  const addr = `http://localhost:${PORT}`;
+  if (err.code === "EADDRINUSE") {
+    console.error(`The curation page is already running at ${addr} (another terminal, or an agent started it).`);
+    console.error(`Opening it. To restart it with fresh code instead: pkill -f scripts/curate.mjs && npm run curate`);
+    if (process.platform === "darwin" && !process.argv.includes("--no-open")) spawn("open", [addr], { stdio: "ignore" });
+    process.exit(0);
+  }
+  console.error(err);
+  process.exit(1);
+});
+server.listen(PORT, "127.0.0.1", () => {
   const addr = `http://localhost:${PORT}`;
   console.log(`curating at ${addr}  (kept ${picks.kept.length}, rejected ${picks.rejected.length})`);
   if (process.platform === "darwin" && !process.argv.includes("--no-open")) spawn("open", [addr], { stdio: "ignore" });
