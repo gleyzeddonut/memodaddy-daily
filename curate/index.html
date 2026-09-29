@@ -61,11 +61,12 @@
   .phone .nav .dot { width: 5px; height: 5px; border-radius: 50%; top: 38px; left: 66px; }
   .phone .status { position: absolute; top: 18px; left: 52px; font-size: 16px; font-weight: 600; }
 
-  footer { border-top: 1px solid var(--line); background: var(--panel); padding: 10px 16px; display: grid; grid-template-rows: auto auto; gap: 8px; }
+  footer { border-top: 1px solid var(--line); background: var(--panel); padding: 10px 16px; display: grid; grid-template-rows: auto auto auto auto; gap: 6px; }
   .strip-head { display: flex; align-items: baseline; gap: 10px; font-size: 13px; color: var(--muted); }
   .strip-head b { color: var(--ink); }
   .strip[hidden] { display: none; }
-  .strip { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 6px; min-height: 96px; }
+  .strip { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 6px; min-height: 96px; align-items: center; }
+  .strip .empty-note { color: var(--muted); font-size: 13px; padding: 0 4px; }
   .thumb { flex: none; width: 42px; height: 90px; border-radius: 6px; background-size: cover; background-position: center; cursor: pointer; border: 2px solid transparent; position: relative; }
   .thumb.current { border-color: var(--accent); }
   .thumb.kept::after { content: ""; position: absolute; right: 2px; top: 2px; width: 8px; height: 8px; border-radius: 50%; background: var(--keep); }
@@ -108,7 +109,8 @@
 <footer>
   <div class="strip-head"><b id="keptCount"></b> <span>kept, in day order — drag to reorder, click to view</span> <span class="spacer"></span> <span id="queueCount"></span></div>
   <div class="strip" id="kept"></div>
-  <div class="strip" id="queue" style="min-height:0" hidden></div>
+  <div class="strip-head"><b id="queueLabel">results</b> <span id="queueNote">search above, or load sources.json</span></div>
+  <div class="strip" id="queue"></div>
 </footer>
 <script type="module" src="app.js"></script>
 </body>

@@ -128,10 +128,11 @@ async function show(entry) {
 // ---- queue
 
 let queueIsKept = false;
-function setQueue(entries, start = 0, isKept = false) {
+let queueTitle = "";
+function setQueue(entries, start = 0, isKept = false, title = "") {
   queue = entries;
   queueIsKept = isKept;
-  $("queue").hidden = isKept; // the kept strip already shows these
+  queueTitle = title;
   index = entries.length ? start : -1;
   renderQueue();
   renderCounts();
@@ -160,6 +161,15 @@ function nextUndecided() {
 function renderQueue() {
   const el = $("queue");
   el.innerHTML = "";
+  $("queueLabel").textContent = queueIsKept ? "reviewing kept" : "results";
+  $("queueNote").textContent = queueIsKept ? "stepping through the rotation above; search to load new candidates"
+    : queue.length ? `${queue.length} for “${queueTitle}” — ← → step, K keep, X reject`
+    : queueTitle ? `nothing for “${queueTitle}” — try other words (aic: needs every word to match)` : "search above, or load sources.json";
+  if (!queue.length && !queueIsKept) {
+    const n = document.createElement("div"); n.className = "empty-note";
+    n.textContent = queueTitle ? "no results" : "no candidates loaded yet";
+    el.appendChild(n);
+  }
   queue.forEach((e, i) => {
     const d = document.createElement("div");
     const status = state.kept.some((k) => k.id === e.id) ? "kept" : state.rejected.includes(e.id) ? "rejected" : "";
@@ -259,7 +269,7 @@ $("search").onsubmit = async (ev) => {
   try {
     const found = await search(term);
     const fresh = found.filter((e) => e.status === "new");
-    setQueue(dedupe(fresh.length ? fresh : found));
+    setQueue(dedupe(fresh.length ? fresh : found), 0, false, term);
   } catch (err) { alert(err.message); }
 };
 
@@ -274,7 +284,7 @@ $("loadSources").onclick = async () => {
     const out = [];
     const longest = Math.max(...lists.map((l) => l.length));
     for (let i = 0; i < longest; i++) for (const l of lists) if (l[i]) out.push(l[i]);
-    setQueue(dedupe(out.filter((e) => e.status === "new")));
+    setQueue(dedupe(out.filter((e) => e.status === "new")), 0, false, "sources.json");
   } catch (err) { alert(err.message); }
 };
 
