@@ -72,8 +72,8 @@ async function show(entry) {
     <div class="photo" style="background-image:url('${stageURL(entry)}')"></div>
     <div class="wash" style="background:linear-gradient(${stop(0.9, 0)}, ${stop(0.6, 0.3)}, ${stop(0, 0.48)}, ${stop(0, 0.66)}, ${stop(0.85, 0.9)}, ${stop(0.95, 1)})"></div>
     <div class="wash" style="background:
-      radial-gradient(circle 84px at 195px ${844 - 128 - 46}px, ${stop(0.26, 0)}, ${stop(0.12, 0.55)}, ${stop(0, 1)})"></div>
-    <div class="word-pool" style="background:color-mix(in srgb, ${bg} 26%, transparent)"></div>
+      radial-gradient(circle 84px at 195px ${844 - 128 - 46}px, ${stop(0.16, 0)}, ${stop(0.07, 0.55)}, ${stop(0, 1)})"></div>
+    <div class="word-pool" style="background:color-mix(in srgb, ${bg} 16%, transparent)"></div>
     <div class="status" style="color:${p.textPrimary}">9:41</div>
     <div class="wordmark memo" style="color:${p.textPrimary}">memo</div>
     <div class="wordmark daddy" style="color:${p.textPrimary}">daddy</div>
