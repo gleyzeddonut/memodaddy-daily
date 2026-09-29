@@ -24,14 +24,14 @@ structural changes.
 ## Data flow, one phone, one day
 
 1. `DailyBackgrounds.refreshIfNeeded()` runs on foreground when the theme
-   is Daily. It applies the **cached** manifest (or the bundled one on
-   first run) immediately, then fetches
+   is Daily. It applies the **cached** manifest immediately (nothing on
+   a first run), then fetches
    `https://raw.githubusercontent.com/gleyzeddonut/memodaddy-daily/main/manifest.json`,
    caches it, and applies that. (GitHub's raw CDN caches for ~5 min, so a
    push is not instant.)
 2. Entry index = days since 2026-01-01 (local midnight), mod list length.
    `DailyBackgrounds.index(for:count:)`.
-3. The entry's image loads: bundled file → phone cache
+3. The entry's image loads: phone cache
    (`Application Support/DailyBackgrounds/<id>.img`) → HTTPS download
    (≤12 MB). Unsplash images are hotlinked from `images.unsplash.com`,
    a CDN with no rate limit.
@@ -48,7 +48,6 @@ Only iOS. The Mac theme picker hides Daily (`AppTheme.macCases`).
 
 ```json
 { "images": [
-  { "id": "cat-lounge", "url": "https://raw.githubusercontent.com/.../images/cat-lounge.jpg" },
   { "id": "unsplash-QsWG0kjPQRY",
     "url": "https://images.unsplash.com/photo-…?ixid=…&w=1290&h=2796&fit=crop&crop=entropy&q=80&fm=jpg",
     "color": "#f3d9f3",
@@ -65,7 +64,7 @@ Only iOS. The Mac theme picker hides Daily (`AppTheme.macCases`).
 - `id`: unique, stable, ≤64 chars of `[A-Za-z0-9_-]`; it names the
   phone's cache file. Unsplash ids are `unsplash-<photo id>`; the pull
   script treats any other prefix as hand-added and keeps it in front.
-- `url` (remote) or `file` (bundled resource name). HTTPS only.
+- `url`: HTTPS only. (The old `file` form for bundled images is gone.)
 - `color`, `credit` optional. Older manifests without them still decode.
 - App-side `DailyManifest.validated` drops entries with unsafe ids/URLs
   and strips non-HTTPS links inside `credit` (keeping the entry).
@@ -168,8 +167,10 @@ without a keep.
 - `Mumo/Views/ContentView.swift`: owns `DailyBackgrounds`, passes image
   and credit when `appTheme == daily`, calls `refreshIfNeeded()` on
   foreground/theme change.
-- `Mumo/Resources/DailyBackgrounds/`: bundled fallback (`manifest.json`
-  + `cat-lounge.jpg`). Xcode copies these flat; `bundledURL` tries both.
+- No bundled fallback any more (Sep 28, evening): the cat and the
+  `Resources/DailyBackgrounds` folder are gone from the app, and the
+  `cat-lounge` hand-added entry and `images/` from this repo. Offline on
+  a very first run the Daily page stays flat until the network answers.
 - `MumoTests/DailyBackgroundsTests.swift`: 9 tests (index maths,
   decoding, validation, credit line, ping request scoping).
   `MumoTests/DailyPaletteTests.swift`: 5 (extraction on synthetic images,
@@ -223,9 +224,8 @@ succeeds, which is fine once main matches.
   Unsplash. Dan intends to turn it off for launch.
 - **Prefetch:** in any theme, once a day, the app fetches the manifest
   and caches today's and tomorrow's photo plus their colours
-  (`DailyBackgrounds.prefetch`), so switching to Daily is instant and the
-  bundled cat no longer flashes first (it only shows when a first run is
-  offline). Traffic per phone per day: one manifest fetch + up to two
+  (`DailyBackgrounds.prefetch`), so switching to Daily is instant and
+  nothing flashes first (there is no bundled fallback any more). Traffic per phone per day: one manifest fetch + up to two
   image downloads from the CDN; still one API ping.
 - **Launch:** the app shows the cached photo and its stored palette
   synchronously in `DailyBackgrounds.init` (today's, else the last one
