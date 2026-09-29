@@ -43,6 +43,9 @@ portrait or square works are offered. Then:
   click to view. **Shuffle (mix sources)** shuffles each library's picks
   and lets the libraries take turns, so a run of newly kept prints
   spreads through the year; **Undo shuffle** puts the old order back.
+  New keeps always land at the end; **Spread N new picks** slots the ones
+  kept since the last shuffle or spread evenly into the existing order
+  without moving anything else.
 
 Every decision writes `picks.json` and rebuilds `manifest.json` on the
 spot, so when you're done it's just:

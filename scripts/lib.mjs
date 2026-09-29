@@ -91,6 +91,7 @@ export { isCurated, SOURCES, parseTerm } from "./sources.mjs";
 export async function readPicks() {
   const picks = await readJSON(picksPath, { kept: [], rejected: [] });
   picks.kept ??= []; picks.rejected ??= [];
+  if (!Array.isArray(picks.settledIDs)) delete picks.settledIDs;
   return picks;
 }
 

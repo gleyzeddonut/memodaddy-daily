@@ -54,6 +54,7 @@ function applyState(s) {
   Object.assign(state, s);
   renderKept();
   renderCounts();
+  updateSpreadButton();
 }
 
 function renderCounts() {
@@ -254,11 +255,35 @@ function mixedOrder(kept) {
 }
 window.mixedOrder = mixedOrder;
 
+/// New picks (kept since the last shuffle/spread) slotted evenly into the
+/// settled order; the settled ones keep their relative order. Pure.
+function spreadOrder(kept, settledIDs) {
+  const settledSet = new Set(settledIDs ?? []);
+  const settled = kept.filter((e) => settledSet.has(e.id)).map((e) => e.id);
+  const fresh = kept.filter((e) => !settledSet.has(e.id)).map((e) => e.id);
+  const merged = [...settled], total = settled.length + fresh.length;
+  fresh.forEach((id, k) => merged.splice(Math.min(merged.length, Math.floor((k + 0.5) / fresh.length * total)), 0, id));
+  return merged;
+}
+window.spreadOrder = spreadOrder;
+
+function updateSpreadButton() {
+  const b = $("spread");
+  if (!state.settledIDs) { b.disabled = true; b.title = "needs the server restarted once (pkill -f scripts/curate.mjs && npm run curate)"; b.textContent = "Spread new picks"; return; }
+  const n = state.kept.filter((e) => !new Set(state.settledIDs).has(e.id)).length;
+  b.disabled = n === 0; b.textContent = n ? `Spread ${n} new pick${n === 1 ? "" : "s"}` : "No new picks to spread";
+  b.title = "slot the picks kept since the last shuffle or spread evenly into the existing order, leaving everything else where it is";
+}
+$("spread").onclick = async () => {
+  if (!state.settledIDs) return;
+  applyState(await api("/api/order", { ids: spreadOrder(state.kept, state.settledIDs), settle: true }));
+};
+
 let orderBeforeShuffle = null;
 $("shuffle").onclick = async () => {
   if (state.kept.length < 2) return;
   orderBeforeShuffle = state.kept.map((e) => e.id);
-  applyState(await api("/api/order", { ids: mixedOrder(state.kept) }));
+  applyState(await api("/api/order", { ids: mixedOrder(state.kept), settle: true }));
   $("unshuffle").hidden = false;
 };
 $("unshuffle").onclick = async () => {

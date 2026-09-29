@@ -46,6 +46,7 @@ async function state() {
   return {
     kept: picks.kept,
     rejected: picks.rejected,
+    settledIDs: picks.settledIDs ?? null,
     handAdded: (manifest.images ?? []).filter((e) => !isCurated(e)),
     libraries: Object.fromEntries(Object.entries(SOURCES).map(([k, v]) => [k, v.label])),
     sources: await readJSON(sourcesPath, { collections: [], queries: [] }),
@@ -154,6 +155,9 @@ async function handle(req, res) {
         const ordered = body.ids.map((id) => byId.get(id)).filter(Boolean);
         if (ordered.length !== picks.kept.length) return send(res, 400, { error: "order must list every kept id" });
         picks.kept = ordered;
+        // A shuffle or a spread "settles" the rotation: later keeps count
+        // as new until the next spread.
+        if (body.settle) picks.settledIDs = ordered.map((e) => e.id);
         break;
       }
       default:
