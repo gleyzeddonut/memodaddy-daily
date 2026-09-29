@@ -72,7 +72,7 @@ async function show(entry) {
     <div class="photo" style="background-image:url('${stageURL(entry)}')"></div>
     <div class="wash" style="background:linear-gradient(${stop(0.9, 0)}, ${stop(0.6, 0.3)}, ${stop(0, 0.48)}, ${stop(0, 0.66)}, ${stop(0.85, 0.9)}, ${stop(0.95, 1)})"></div>
     <div class="wash" style="background:
-      radial-gradient(circle 64px at 62px 412px, ${stop(0.38, 0)}, ${stop(0.2, 0.55)}, ${stop(0, 1)}),
+      radial-gradient(circle 64px at 49px 416px, ${stop(0.38, 0)}, ${stop(0.2, 0.55)}, ${stop(0, 1)}),
       radial-gradient(circle 84px at 195px ${844 - 128 - 46}px, ${stop(0.38, 0)}, ${stop(0.2, 0.55)}, ${stop(0, 1)})"></div>
     <div class="status" style="color:${p.textPrimary}">9:41</div>
     <div class="wordmark memo" style="color:${p.textPrimary}">memo</div>
