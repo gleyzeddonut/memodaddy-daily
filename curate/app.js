@@ -168,7 +168,7 @@ function renderQueue() {
   el.innerHTML = "";
   $("queueLabel").textContent = queueIsKept ? "reviewing kept" : "results";
   $("queueNote").textContent = queueIsKept ? "stepping through the rotation above; search to load new candidates"
-    : queue.length ? `${queue.length} for “${queueTitle}” — ← → step, K keep, X reject`
+    : queue.length ? `${queue.length} for “${queueTitle}” (${(() => { const c = {}; for (const e of queue) { const k = sourceOf(e); c[k] = (c[k] ?? 0) + 1; } return Object.entries(c).map(([k, n]) => `${n} ${SOURCE_BADGE[k] ?? k}`).join(" · "); })()}) — ← → step, K keep, X reject`
     : queueTitle ? `nothing for “${queueTitle}” — try other words (aic: needs every word to match)` : "search above, or load sources.json";
   if (!queue.length && !queueIsKept) {
     const n = document.createElement("div"); n.className = "empty-note";
@@ -274,16 +274,40 @@ function dedupe(entries) {
   return entries.filter((e) => !seen.has(e.id) && seen.add(e.id));
 }
 
+/// Round-robin across lists so consecutive candidates come from different libraries.
+function interleave(lists) {
+  const out = [];
+  const longest = Math.max(0, ...lists.map((l) => l.length));
+  for (let i = 0; i < longest; i++) for (const l of lists) if (l[i]) out.push(l[i]);
+  return out;
+}
+
 $("search").onsubmit = async (ev) => {
   ev.preventDefault();
   let term = $("q").value.trim();
   if (!term) return;
   const sel = selectedSource();
-  if (sel !== "all" && !/^[a-z]+:/i.test(term)) term = SOURCE_PREFIX[sel] + term;
+  const hasPrefix = /^[a-z]+:/i.test(term);
   try {
-    const found = await search(term);
+    let found, title;
+    if (sel === "all" && !hasPrefix) {
+      // Every library at once: Unsplash (two pages), AIC and the Met (one
+      // page each; the Met is slow), interleaved. A failing library is
+      // skipped, not fatal.
+      const terms = [term, `aic: ${term}`, `met: ${term}`];
+      const results = await Promise.allSettled([search(terms[0], 2), search(terms[1], 1), search(terms[2], 1)]);
+      const lists = results.map((r) => (r.status === "fulfilled" ? r.value : []));
+      const failed = results.map((r, i) => (r.status === "rejected" ? terms[i].split(":")[0] : null)).filter(Boolean);
+      if (failed.length) console.warn("search failed for", failed, results.filter((r) => r.status === "rejected").map((r) => r.reason?.message));
+      found = interleave(lists);
+      title = `${term} (all sources${failed.length ? `; ${failed.join(", ")} failed` : ""})`;
+    } else {
+      if (sel !== "all" && !hasPrefix) term = SOURCE_PREFIX[sel] + term;
+      found = await search(term);
+      title = term;
+    }
     const fresh = found.filter((e) => e.status === "new");
-    setQueue(dedupe(fresh.length ? fresh : found), 0, false, term);
+    setQueue(dedupe(fresh.length ? fresh : found), 0, false, title);
   } catch (err) { alert(err.message); }
 };
 
