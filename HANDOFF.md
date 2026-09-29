@@ -160,10 +160,9 @@ without a keep.
 - `Mumo/Views/FrontPageView.swift`: `dailyImage`, `dailyCredit` inputs;
   `dailyBackdrop` (photo + page-colour gradient, 18% while recording);
   `creditLine` (11pt medium, 22% opacity, right-aligned with 20pt
-  trailing, fade mask over the padded box so descenders survive, text
-  bottom ~96pt off the screen bottom, i.e. between the record ring
-  (bottom edge at 128pt) and the nav (~78pt); hidden unless mode is
-  idle/saved; tap opens `credit.link`).
+  trailing, just above the wordmark — padded box top at 172pt, so the
+  text bottom is ~10pt above the "memo" glyphs; hidden unless mode is
+  idle/saved; name and "Unsplash" are links).
 - `Mumo/Views/ContentView.swift`: owns `DailyBackgrounds`, passes image
   and credit when `appTheme == daily`, calls `refreshIfNeeded()` on
   foreground/theme change.
