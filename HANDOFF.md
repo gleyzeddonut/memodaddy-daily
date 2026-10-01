@@ -1,48 +1,70 @@
-# Handoff · Daily theme backgrounds (Unsplash feed)
+# Handoff · Daily theme backgrounds
 
-Read this before touching the Daily theme in either repo. Last updated
-2026-09-28, when the Unsplash feed went live. The app's own handoff
-(`mumo/HANDOFF.md`) covers the rest of the app; its Daily-theme bullet
-points here.
+Read this before touching the Daily theme in either repo. Last rewritten
+2026-10-01 (state as of the night of Sep 28–29). The app's own handoff
+(`mumo/HANDOFF.md`) covers the rest of the app; its Daily bullets point
+here.
 
 ## What this is
 
 Memo Daddy (the `mumo` repo, iOS + Mac voice memo app) has a **Daily**
-theme: Classic colours plus one full-bleed portrait photo on the iOS
-front page that changes every local midnight, KlydoClock-style. Dan has
-no artists yet, so the rotation comes from Unsplash. When artists arrive,
-their images go in the same manifest as hand-added entries; nothing
-structural changes.
+theme: one full-bleed portrait picture on the iOS front page that changes
+every local midnight, KlydoClock-style, with the app's colours derived
+from the picture. Dan has no artists yet, so pictures come from free
+libraries, hand-picked on a local curation page. When artists arrive,
+their images are just more manifest entries.
+
+## Current state
+
+- **Rotation live on `main`:** 250 kept pictures (174 Unsplash photos,
+  36 Art Institute of Chicago, 30 Unsplash illustrations, 10 Met), 193
+  rejected ids on file, 24 pinned days (22 holidays + 2 by hand).
+- **App:** v1.3 **build 37** on TestFlight (iOS, uploaded 2026-09-29
+  00:18) — the first build that shows pins. Build 36 the evening before
+  carried the rest of the Daily work. The Mac build is still 35 (Daily
+  is iOS-only; the Mac target builds). The front-page preview arrow
+  (`DailyBackgrounds.previewControlsEnabled`) is still **on**; turn it
+  off before a build meant for anyone beyond testers.
+- **Unsplash key:** demo tier, 50 API requests/hour, shared by the
+  curation page and every phone's daily ping. The production
+  application (1,000/h) is drafted in
+  `~/Documents/CLAUDE/background pics/unsplash-application/` with
+  screenshots; Dan submits it himself.
 
 ## The two repos
 
 | Repo | Visibility | Role |
 |---|---|---|
-| `github.com/gleyzeddonut/memodaddy-daily` (this one, clone at `~/Documents/CLAUDE/memodaddy-daily`) | public | Curation. `npm run curate` (browser page) → `picks.json` → `manifest.json`. Pushing `main` changes every phone's rotation, no app release. |
-| `github.com/gleyzeddonut/mumo` (clone at `~/Documents/CLAUDE/mumo`) | private | The app. Reads the manifest, shows the photo and credit, pings Unsplash. |
+| `github.com/gleyzeddonut/memodaddy-daily` (this one, clone at `~/Documents/CLAUDE/memodaddy-daily`) | public | Curation. `npm run curate` → `picks.json` → `manifest.json`. Pushing `main` changes every phone's rotation, no app release. **Never commit `.env`** (the Unsplash key). |
+| `github.com/gleyzeddonut/mumo` (clone at `~/Documents/CLAUDE/mumo`) | private | The app. Reads the manifest, shows the picture, credit and derived palette, pings Unsplash. |
 
 ## Data flow, one phone, one day
 
-1. `DailyBackgrounds.refreshIfNeeded()` runs on foreground when the theme
-   is Daily. It applies the **cached** manifest immediately (nothing on
-   a first run), then fetches
-   `https://raw.githubusercontent.com/gleyzeddonut/memodaddy-daily/main/manifest.json`,
-   caches it, and applies that. (GitHub's raw CDN caches for ~5 min, so a
-   push is not instant.)
-2. Entry index = days since 2026-01-01 (local midnight), mod list length.
-   `DailyBackgrounds.index(for:count:)`.
-3. The entry's image loads: phone cache
-   (`Application Support/DailyBackgrounds/<id>.img`) → HTTPS download
-   (≤12 MB). Unsplash images are hotlinked from `images.unsplash.com`,
-   a CDN with no rate limit.
-4. `image`, `credit` and `currentID` publish; `FrontPageView` draws the
-   photo and the credit line.
-5. If the entry has `credit.downloadLocation` on `api.unsplash.com`, the
-   app sends one GET with `Authorization: Client-ID <key>`, once per
-   photo per process, fire-and-forget. This is the **only** call that
-   counts against the Unsplash API rate limit.
-
-Only iOS. The Mac theme picker hides Daily (`AppTheme.macCases`).
+1. On every launch and foreground, **in any theme**, `prefetch()` runs
+   once per local day: fetches
+   `https://raw.githubusercontent.com/gleyzeddonut/memodaddy-daily/main/manifest.json`
+   (GitHub's raw CDN caches ~5 min), caches it, downloads today's and
+   tomorrow's pictures (pins included) and stores their colours. So
+   picking Daily, or the midnight rollover, is instant.
+2. In the Daily theme, `DailyBackgrounds.init` shows the cached picture
+   and stored palette **synchronously** (today's, else the last shown),
+   so the first frame is never white; `refreshIfNeeded()` then applies
+   the cached manifest and re-fetches.
+3. The day's picture = `DailyBackgrounds.entry(for:in:)`: an exact-date
+   pin ("YYYY-MM-DD") beats a yearly pin ("MM-DD") beats the rotation
+   entry (days since 2026-01-01 local midnight, mod list length).
+4. Images: phone cache (`Application Support/DailyBackgrounds/<id>.img`)
+   → HTTPS download (≤12 MB). Unsplash images are hotlinked from
+   `images.unsplash.com` (no rate limit); AIC via its IIIF server with a
+   phone-aspect crop; the Met as originals.
+5. `DailyColors.extract` reads the decoded image (vivid hue vote, average
+   colour, luma, plus the patches behind the tuner link and the record
+   button); `Theme.daily(from:)` builds the palette; stored per id in
+   UserDefaults as `dailyColors.v<schemaVersion>.<id>`.
+6. For Unsplash entries the app GETs `credit.downloadLocation` once per
+   picture per process (`Authorization: Client-ID <key>`). This is the
+   **only** call that counts against the API limit. Preview steps don't
+   ping.
 
 ## Manifest schema
 
@@ -51,31 +73,38 @@ Only iOS. The Mac theme picker hides Daily (`AppTheme.macCases`).
   { "id": "unsplash-QsWG0kjPQRY",
     "url": "https://images.unsplash.com/photo-…?ixid=…&w=1290&h=2796&fit=crop&crop=entropy&q=80&fm=jpg",
     "color": "#f3d9f3",
-    "credit": {
-      "source": "unsplash",
-      "name": "Filip Zrnzević",
+    "credit": { "source": "unsplash", "name": "Filip Zrnzević",
       "link": "https://unsplash.com/@filipz?utm_source=memo_daddy&utm_medium=referral",
       "sourceLink": "https://unsplash.com/?utm_source=memo_daddy&utm_medium=referral",
-      "downloadLocation": "https://api.unsplash.com/photos/QsWG0kjPQRY/download?ixid=…"
-    } }
-] }
+      "downloadLocation": "https://api.unsplash.com/photos/QsWG0kjPQRY/download?ixid=…" } },
+  { "id": "aic-21043",
+    "url": "https://www.artic.edu/iiif/2/<image id>/pct:19.86,0,60.28,100/!1290,2796/0/default.jpg",
+    "title": "Freeing a captured bird", "detail": "c. 1769/70 · woodblock print",
+    "credit": { "source": "aic", "sourceName": "Art Institute of Chicago", "name": "Suzuki Harunobu",
+      "link": "https://www.artic.edu/artworks/21043", "sourceLink": "https://www.artic.edu" } }
+ ],
+ "pins": [
+  { "date": "10-31", "holiday": "Halloween", "query": "Halloween", "image": { …an entry as above… } },
+  { "date": "2026-12-05", "holiday": "Hanukkah", "image": { … } }
+ ] }
 ```
 
 - `id`: unique, stable, ≤64 chars of `[A-Za-z0-9_-]`; it names the
-  phone's cache file. Unsplash ids are `unsplash-<photo id>`; the pull
-  script treats any other prefix as hand-added and keeps it in front.
-- `url`: HTTPS only. (The old `file` form for bundled images is gone.)
-- `color`, `credit` optional. Older manifests without them still decode.
-- App-side `DailyManifest.validated` drops entries with unsafe ids/URLs
-  and strips non-HTTPS links inside `credit` (keeping the entry).
-- List order = day order. Reordering shifts days; that's accepted.
+  phone's cache file. Prefix = library: `unsplash-`, `ill-`
+  (Unsplash illustrations), `aic-`, `met-`. Anything else is
+  "hand-added" and the builder keeps it in front.
+- `url`: HTTPS only. `color`, `title`, `detail`, `credit`, `pins` optional;
+  older manifests and older apps are fine without them.
+- Credit line in the app: `sourceName` set → "Artist · Library" (both
+  linked); `source` = unsplash → "Photo by Name on Unsplash" (both
+  linked; illustrations set `sourceName: "Unsplash"` → "Name · Unsplash");
+  else "Photo by Name".
+- `DailyManifest.validated` drops entries with unsafe ids/URLs and strips
+  non-HTTPS links inside `credit`; pins are validated the same way.
+- List order = day order. Reordering shifts what lands on which day;
+  that's accepted.
 
-## Curation workflow
-
-`picks.json` is the source of truth: `kept` = full entries in rotation
-order, `rejected` = ids that must not come back. `manifest.json` = the
-hand-added entries already in it + `kept`, rebuilt by every curation
-decision and by `npm run build`.
+## The curation page
 
 ```sh
 cd ~/Documents/CLAUDE/memodaddy-daily
@@ -83,217 +112,188 @@ npm run curate        # node scripts/curate.mjs → http://localhost:4747 (binds
 git commit -am "Curate rotation" && git push
 ```
 
-The page (`curate/index.html`, `curate/app.js`) renders each candidate in
-a 390×844 mock of the front page using the app's layout numbers (wordmark
-at 150/257 left 20, tuner link at 392, ring bottom edge 128 up, credit
-right 20 / bottom 96 at 22%, nav row 34–78) and the palette from
-`curate/palette.js`, a line-for-line port of `DailyColors.extract` and
-`Theme.daily(from:)`. **If the Swift changes, change palette.js too** —
-that port is what makes the mock honest. Image bytes go through the
-server's `/img` proxy (hosts: images.unsplash.com, raw.githubusercontent
-.com) so the canvas can read pixels. The Unsplash key never reaches the
-page; the server makes the API calls (`/api/search?q=…|collection=…`).
-POST `/api/keep|reject|clear|order` write picks and rebuild the manifest.
+**Etiquette.** Dan runs this himself and asked that agents not restart
+it. The server keeps picks in memory and writes `picks.json` +
+`manifest.json` on every change, so never run a second server against
+the same files; test on a throwaway copy of the repo (rsync without
+`.git`, `PORT=4748`). To change his picks from outside, call his
+server's API (`/api/order`, `/api/pin`, …) so memory and disk agree.
+If the port is busy the script now says so and opens the running page.
+Server-side changes (anything under `scripts/`) need
+`pkill -f scripts/curate.mjs && npm run curate`; page changes
+(`curate/`) just need a reload — the server sends `no-store`.
 
-**Libraries** (`scripts/sources.mjs`, Sep 28 night): the search term can
-be prefixed `aic:` (Art Institute of Chicago — POST search with an
-exact multi-field `multi_match`, `is_public_domain` filter, IIIF URL with
-a `pct:` region cropped to the phone aspect and `!1290,2796` size) or
-`met:` (Met open access — `search` then one `objects/{id}` call per hit,
-`dept:N` → `departmentId`, original-size images, so big). Both yield
-entries `{ id: "<prefix>-<id>", url, title, detail, credit: { source,
-sourceName, name, link, sourceLink } }`; the app shows "Artist ·
-Library". `isCurated` (any known prefix) replaces `isUnsplash` in the
-manifest builder, keep validation and the proxy host list; adding a
-library = one adapter object in `SOURCES`. Rijksmuseum, Smithsonian
-and Openverse would need free API keys and are not wired yet. AIC has
-only one public-domain Ohara Koson with an image; Hasui isn't marked
-public domain there — Hokusai/Hiroshige/Harunobu are plentiful.
+**Files.** `scripts/curate.mjs` (server), `scripts/lib.mjs` (Unsplash
+api, entry shape, picks, manifest builder), `scripts/sources.mjs`
+(library adapters, `parseTerm`, `isCurated`), `scripts/holidays.mjs`
+(date rules), `scripts/build-manifest.mjs` (`npm run build` after hand
+edits to picks), `curate/index.html`, `curate/app.js`,
+`curate/palette.js` (a line-for-line port of `DailyColors.extract`,
+`Theme.daily`, `legibleAccent` — **if the Swift changes, change this
+too**; it is what makes the mock honest), `holidays.json`,
+`sources.json` (queries the **Load sources.json** button queues),
+`picks.json` (source of truth: `kept` in day order, `rejected` ids,
+`pins`, `settledIDs`).
 
-**Four libraries** (Sep 28, late): `ill` (Unsplash illustrations via
-`/search/illustrations`, same key; adapters get `ctx = { api, entry,
-key }`) joined `unsplash`, `aic`, `met`. Library of Congress WPA
-posters and Wellcome Collection were wired and then removed the same
-night — Dan: "posters are not the right vibe" (the adapters are in git
-history at 0551ef2 if ever wanted). Badges: U · ILL · AIC · MET. AIC ignores `random_score` and caps searches at
-1,000 results, so its browse uses a random `id` window of 40k plus a
-random page — verified to differ call to call.
+**The mock** is a 390×844 front page with the app's layout numbers and
+the derived palette: wordmark, tuner link (legible accent + a faint
+word-shaped pool), record ring/fill judged on their own patch, credit
+above the wordmark, nav. The side panel prints the palette, the
+worst-case contrast of the tuner link and ring, and the artist/title.
 
-**Browse (no keywords)**: `/api/browse?source=<any of the six>`
-— Unsplash `/photos/random` (30 portrait); AIC `function_score` /
-`random_score` (seed per page) over public-domain works in print/
-painting/drawing/poster/textile/watercolour classes; the Met samples
-random ids from `/objects?departmentIds=6|9` (cached in the adapter)
-and keeps public-domain portrait ones with an image (~1/3 hit rate, one
-request each, so slow). The page browses when the source picker
-changes, **Browse** reloads, **More** appends. Dan asked for this
-because he wanted to see each library's character without keywords.
+**Libraries** (`SOURCES` in `sources.mjs`; adding one = one adapter
+object with `page(query, page, perPage, ctx)` and `browse(perPage, ctx)`,
+`ctx = { api, entry, key }`):
 
-**Pins** (Sep 28, late night): `picks.json.pins = [{ date, image }]`,
-written by `POST /api/pin {date, entry}` / `/api/unpin {date}` (date
-must be `MM-DD` or `YYYY-MM-DD`; one per date; entry from any known
-library, need not be kept) and copied into `manifest.json.pins` by the
-builder. The app (mumo ≥ the pins commit, i.e. build 37+) shows the
-pinned picture on that day instead of the rotation. Page: "Pin to a
-day" in the side panel, "pinned days" chips above the results row.
+| picker / prefix | badge | what | notes |
+|---|---|---|---|
+| Unsplash photos (no prefix) | U | `/search/photos`, `/photos/random` | 1 API call per page |
+| Unsplash illustrations `ill:` | ILL | `/search/illustrations` | same key; browse = random broad word + random page (2 calls) |
+| Art Institute of Chicago `aic:` | AIC | POST search, exact cross-field `multi_match`, `is_public_domain`; IIIF `pct:` crop | free, no key; browse = random 40k id window (API ignores random_score, caps at 1,000) |
+| The Met `met:` | MET | `search` + one `objects/{id}` per hit, `dept:N` | free, no key, loose search, big originals; browse samples random ids from depts 6\|9, ~⅓ hit rate, slow |
 
-**Holidays** (Sep 28, late night): `holidays.json` (name, date rule,
-query, optional sources) + `scripts/holidays.mjs` (`resolveDates`:
-fixed MM-DD stays yearly; `easter[+N]`, `Nth-weekday-MM`,
-`last-weekday-MM` become YYYY-MM-DD for this year and next; Gregorian
-Easter algorithm, verified for 2026/27). `GET /api/holidays` lists them
-with pinned flags; `POST /api/holidays/auto {}` pins a random portrait
-match for every unpinned date, `{date}` re-rolls one (skips rejected
-ids, other pins, and the current pick); pins carry `holiday` and
-`query`. Tested on a throwaway copy of the repo, never against Dan's
-running server (it holds picks in memory and writes picks.json).
+Library of Congress WPA posters and Wellcome Collection were wired and
+removed the same night ("posters are not the right vibe"); adapters at
+`0551ef2` if ever wanted. Rijksmuseum / Smithsonian / Openverse need
+free keys and aren't wired.
 
-`sources.json` is now just a list the **Load sources.json** button can
-queue (queries and collection ids); it no longer feeds the manifest by
-itself. There is no automatic pull any more: nothing enters the rotation
-without a keep.
+**Page controls.** Source picker (scopes searches, filters the kept
+strip; "All sources" searches/browses every library and interleaves in
+random order). **Browse** (keyword-less, random batch; fires on picker
+change), **More** (append), search box (plain words, or `prefix: …`,
+`collection:<id>`, `met: carp dept:6`), **Load sources.json**, **Review
+kept**. Keys: → / K keep, ← / X reject, space skip, ⌫ undo, U unkeep.
+Kept strip: drag to reorder, click to view, **Shuffle (mix sources)**
+(shuffles within each library, then spreads every library evenly over
+the rotation; **Undo shuffle**), **Spread N new picks** (keeps since the
+last shuffle/spread slotted evenly into the settled order; needs
+`settledIDs`, which Shuffle/Spread write). Every thumb carries a source
+badge; the kept header counts per source.
+
+**Pins.** Side panel "Pin to a day": `MM-DD` (yearly) or `YYYY-MM-DD`
+(once); one picture per date; the picture need not be kept. The footer
+row "▸ pinned days" folds/unfolds the chips (click to view, ✕ unpin;
+holiday pins have a **re-roll** button). `POST /api/pin {date, entry}`,
+`/api/unpin {date}`.
+
+**Holidays.** `holidays.json`: 23 entries with `name`, `date`, `query`
+(a phrase or a list of phrases, pooled; by default just the name —
+Day of the Dead, Hanukkah, Kwanzaa, Juneteenth have extras), optional
+`sources` (default `["ill", "aic"]`). Date rules (`scripts/holidays.mjs`):
+fixed `MM-DD` stays yearly; `easter[±N]`, `Nth-weekday-MM`,
+`last-weekday-MM` and `table` (a year→MM-DD map, used for Hanukkah
+2026–2030 — extend it before 2031) resolve to `YYYY-MM-DD` for this year
+and next. **Auto-pin holidays** pins a random portrait match for every
+unpinned date (`POST /api/holidays/auto {}`); **re-roll** on a chip
+(`{date}`) draws an unseen picture from that holiday's pool, fetches the
+next page when the pool runs dry, wraps only when the libraries have
+nothing else, and says why if nothing can be picked. Pools live for the
+server's lifetime (so re-rolls are free); a full first run costs ~1
+Unsplash call per phrase per Unsplash source.
 
 ## Unsplash terms this must keep satisfying
 
-- **Hotlink**, never re-host photos obtained through the API (the site's
-  download button + hand-added entry is the legal way to own a file).
-- **Attribute**: "Photo by <name> on Unsplash", name linked to the
-  photographer and "Unsplash" to unsplash.com, both utm-tagged
-  (`DailyCredit.attributedLine`). The page writes the links; the app
-  shows them.
-- **Ping `download_location`** when a photo is used as a background. The
-  app does, once per photo per run.
-- The Access Key is a public client id. It lives in this repo's
-  gitignored `.env`, in `~/Documents/CLAUDE/background pics/.env`, and
-  as `DailyBackgrounds.unsplashAccessKey` in the (private) app repo.
-  Never commit it here. There is no secret key in use anywhere.
-- Rate limit maths: one ping per phone per day. Past ~50 phones opening
-  in the same hour the ping is throttled; nothing visible breaks, it
-  only under-reports. Fix at that point: apply for production on
-  unsplash.com/developers (free; Unsplash's own checklist says
-  production is 1,000 requests/hour, raised further on request for
-  popular apps). Application text + screenshots are drafted in
-  `~/Documents/CLAUDE/background pics/unsplash-application/`.
+- **Hotlink**, never re-host photos obtained through the API.
+- **Attribute** photographer and Unsplash, both linked, utm-tagged
+  (`DailyCredit.attributedLine`).
+- **Ping `download_location`** when a picture is used as a background
+  (once per picture per run; not for preview steps or museum pieces).
+- The Access Key is a public client id: in this repo's gitignored
+  `.env`, in `~/Documents/CLAUDE/background pics/.env`, and as
+  `DailyBackgrounds.unsplashAccessKey` in the private app repo. No
+  secret key is in use anywhere.
+- Rate maths: one ping per phone per day; past ~50 phones in the same
+  hour it is throttled silently. Apply for production (1,000/h) when
+  user numbers grow.
 
 ## App-side file map (mumo)
 
 - `Mumo/Daily/DailyBackgrounds.swift`: `DailyImage`, `DailyCredit`
-  (`line`, `validated`), `DailyManifest.validated`, the `@Observable`
-  `DailyBackgrounds` (index maths, refresh, cache, load, `credit`,
-  `downloadPingRequest(for:accessKey:)`, `unsplashAccessKey`).
-- `Mumo/Daily/DailyPalette.swift`: `DailyColors.extract(from:)` — on-device
-  colour extraction (vivid hue vote, brightness-gated; average colour;
-  light/dark by luma). `Theme.daily(from:)` in `Views/Theme.swift` builds
-  the palette; `Theme.dailyPalette` holds it while the theme is Daily and
-  is written by `DailyBackgrounds` before the image publishes. ContentView
-  re-keys its tree on theme + `currentID`. Works for any image, so artist
-  and hand-added photos get matched colours too; the manifest `color`
-  field is informational only.
-- Tuner-link legibility (mumo `Theme.legibleAccent`, `Palette.linkAccent`,
-  `DailyColors.linkRegionLuminance` + `…Low/High` percentiles): the
-  accent is re-depthed to clear 4.5:1 over the mean and both ends of
-  the photo patch behind the link, else the scheme's text colour; the
-  app also fades the photo out under the tuner link and the record
-  button (two radial pools of page colour in `dailyBackdrop`; Dan
-  preferred that to a text glow). The page mirrors all of it
-  (`legibleAccent`, `LEGIBILITY_TARGET` in palette.js, the same two
-  radial gradients on the mock) and prints the worst-case contrast,
-  flagging a fall-back. Photos that pass on average but look busy behind the
-  link are still a taste call — reject them.
-- Record button (mumo `Theme.daily`, `DailyColors.buttonRegion…`): the
-  ring and the red fill are judged against the patch behind the button
-  (92pt ring, bottom edge 128pt up) on their own, to `Theme.graphicTarget`
-  3:1. Ring = near-neutral in the photo's hue pushed light/dark; fill =
-  the scheme's red re-depthed but never paler than 0.55 saturation or
-  deeper than 0.6 brightness, else the base red (ring carries it). The
-  page mirrors it (`GRAPHIC_TARGET`, ring/rec swatches, "record ring
-  over its own patch N:1"). Stored colours are keyed
-  `dailyColors.v<DailyColors.schemaVersion>.<id>`; bump the version when
-  the extractor measures something new or old phones keep stale colours.
-- `Mumo/Views/FrontPageView.swift`: `dailyImage`, `dailyCredit` inputs;
-  `dailyBackdrop` (photo + page-colour gradient, 18% while recording);
-  `creditLine` (11pt medium, 22% opacity, right-aligned with 20pt
-  trailing, just above the wordmark — padded box top at 172pt, so the
-  text bottom is ~10pt above the "memo" glyphs; hidden unless mode is
-  idle/saved; name and "Unsplash" are links).
-- `Mumo/Views/ContentView.swift`: owns `DailyBackgrounds`, passes image
-  and credit when `appTheme == daily`, calls `refreshIfNeeded()` on
-  foreground/theme change.
-- No bundled fallback any more (Sep 28, evening): the cat and the
-  `Resources/DailyBackgrounds` folder are gone from the app, and the
-  `cat-lounge` hand-added entry and `images/` from this repo. Offline on
-  a very first run the Daily page stays flat until the network answers.
-- `MumoTests/DailyBackgroundsTests.swift`: 9 tests (index maths,
-  decoding, validation, credit line, ping request scoping).
-  `MumoTests/DailyPaletteTests.swift`: 5 (extraction on synthetic images,
-  derived palette light/dark, muted accents stay muted).
+  (`line`, `attributedLine`, `validated`), `DailyPin`, `DailyManifest`
+  (`validated`, `validate`), `DailyBackgrounds` (`init` warm start,
+  `entry(for:in:offset:)`, `index(for:count:offset:)`, `refreshIfNeeded`
+  / `refresh` / `fetchManifest`, `apply`, `prefetch`, `cachedImage` /
+  `load`, stored colours, `registerDisplay` / `downloadPingRequest`,
+  `unsplashAccessKey`, preview: `previewControlsEnabled`,
+  `showNextPhoto()`, `-dailyPreviewOffset N` launch arg in Debug).
+- `Mumo/Daily/DailyPalette.swift`: `DailyColors` (Codable, `schemaVersion`
+  2) and `extract(from:)` — vivid-hue vote (dark pixels don't vote),
+  average colour + luma, mean/25th/75th-percentile luminance of the
+  tuner-link patch and the record-button patch.
+- `Mumo/Views/Theme.swift`: `Theme.dailyPalette`, `Theme.daily(from:)`
+  (surfaces from the average colour; accent legible on the page;
+  `Palette.linkAccent` legible over the link patch to 4.5:1; record ring
+  near-neutral and fill a bounded red, each to 3:1 over the button
+  patch), `legibleAccent`, `contrastRatio`, `relativeLuminance`,
+  `hsbHex`. Daily derivation is `#if os(iOS)` so the Mac builds.
+- `Mumo/Views/FrontPageView.swift`: `dailyBackdrop`, `wordFade` /
+  `photoFade` (faint pools, 0.16, as the element's own background),
+  `creditLine` (above the wordmark, right-aligned, 22%), the preview
+  arrow, `nextPhotoButton`. `BottomNav.swift`: `AccentTextButtonStyle`
+  reads `Theme.linkAccent`.
+- `Mumo/Views/ContentView.swift`: owns `DailyBackgrounds`, re-keys the
+  tree on theme + `currentID` + `paletteVersion`, calls `prefetch()` on
+  launch/foreground and `refreshIfNeeded()` in Daily.
+- Tests: `MumoTests/DailyBackgroundsTests.swift` (18: index maths,
+  decoding, validation, credits, ping scoping, preview offset, warm
+  start, prefetch via a `StubURLProtocol`, pins) and
+  `MumoTests/DailyPaletteTests.swift` (18: extraction on synthetic
+  images, palette light/dark, link and button legibility).
 
-## Verifying
+## Verifying, screenshots, releasing
 
-```sh
-# unit tests (needs code signing ON: with CODE_SIGNING_ALLOWED=NO the
-# iCloud entitlement is missing and CKContainer traps at launch)
-cd ~/Documents/CLAUDE/mumo
-xcodebuild test -project Mumo.xcodeproj -scheme Mumo \
-  -destination 'platform=iOS Simulator,id=28B7ACA0-0AC4-4C96-B5CA-B7A366207A6F' \
-  -derivedDataPath build/test -only-testing:MumoTests/DailyBackgroundsTests
-
-# see a manifest on the simulator WITHOUT pushing it
-SIM=28B7ACA0-0AC4-4C96-B5CA-B7A366207A6F
-xcrun simctl spawn $SIM defaults write com.dangleyzer.Mumo appTheme daily
-C=$(xcrun simctl get_app_container $SIM com.dangleyzer.Mumo data)
-mkdir -p "$C/Library/Application Support/DailyBackgrounds"
-cp manifest.json "$C/Library/Application Support/DailyBackgrounds/manifest.json"
-xcrun simctl launch $SIM com.dangleyzer.Mumo
-xcrun simctl io $SIM screenshot front.png
-```
-
-The app applies the cached manifest before the network one, so the
-seeded file shows immediately; the remote fetch then replaces it if it
-succeeds, which is fine once main matches.
+- **Simulators.** Dan debugs on `28B7ACA0-…` (iPhone 17 Pro) — don't
+  install/terminate there. Use `6F2AE673-33E6-425E-B6C0-ED1E8AF3452C`
+  for tests (mic + location granted via `simctl privacy`; code signing
+  must stay ON: with `CODE_SIGNING_ALLOWED=NO` the iCloud entitlement is
+  missing and `CKContainer` traps at launch). The iPhone 17 Pro Max
+  `3D2CFE00-…` gives 1320×2868 = Apple's 6.9" App Store size; shots in
+  `~/Documents/CLAUDE/background pics/app-store-screenshots/`.
+- **Pick a picture headlessly:** build with `previewControlsEnabled`
+  flipped false (don't commit), then
+  `simctl launch <sim> com.dangleyzer.Mumo -dailyPreviewOffset N [-tuning]`;
+  offsets are relative to today's index in the *published* manifest.
+  Never swap cache bytes under another id for shots — the credit would
+  be wrong.
+- **Preview a manifest without pushing:** copy it to the app container's
+  `Library/Application Support/DailyBackgrounds/manifest.json`; the app
+  applies the cache before the network.
+- **Release ritual (iOS, headless, proven for 36 and 37):** full suite
+  green → bump all four `CURRENT_PROJECT_VERSION` → commit "Bump build
+  number to N" → tag `v1.3-buildN` → push with tags →
+  `xcodebuild archive … -configuration Release -destination
+  'generic/platform=iOS' -archivePath build/Notable-1.3-N.xcarchive
+  -allowProvisioningUpdates` → `-exportArchive` with
+  `build/ExportOptions-ios.plist` → `xcrun altool --validate-app` then
+  `--upload-app -t ios --apiKey P36BNCBRMP --apiIssuer <issuer>` →
+  record the delivery UUID in `mumo/HANDOFF.md`.
 
 ## Known gaps / likely next asks
 
-- **Sep 28 (later):** curation page added; `picks.json` replaces the
-  automatic pull, rejects are remembered. The 119 photos from the first
-  pull were seeded as kept, unreviewed — Dan meant to go through them.
-- **No collections yet.** `collection:<id>` in the search box works once
-  Dan has some.
-- **Production approval** on Unsplash when user numbers grow.
-- **Artists.** Their images are hand-added entries (`images/` + manifest)
-  or, if hosted elsewhere, any HTTPS URL; add a `credit` with
-  `source` unset so the line reads "Photo by <name>".
-- The ping fires only when the photo is first applied in a process; a
-  phone left open across midnight applies the next day's photo on the
-  next foreground, which also pings. Good enough.
-- `index(for:)` counts days from the epoch's *local* start of day
-  (epoch is 2026-01-01 00:00 UTC), so in US zones the app is one day
-  ahead of a naive UTC `days % count`. Harmless; just don't expect a
-  quick script to name today's entry without mirroring that.
-- **Preview button in the app** (testing aid): with
-  `DailyBackgrounds.previewControlsEnabled` true, a `→` top-right on the
-  front page steps through the manifest in day order without pinging
-  Unsplash. Dan intends to turn it off for launch.
-- **Prefetch:** in any theme, once a day, the app fetches the manifest
-  and caches today's and tomorrow's photo plus their colours
-  (`DailyBackgrounds.prefetch`), so switching to Daily is instant and
-  nothing flashes first (there is no bundled fallback any more). Traffic per phone per day: one manifest fetch + up to two
-  image downloads from the CDN; still one API ping.
-- **Launch:** the app shows the cached photo and its stored palette
-  synchronously in `DailyBackgrounds.init` (today's, else the last one
-  shown), so the first frame isn't white; colours are persisted per
-  photo id in UserDefaults (`dailyColors.<id>`). Only the system launch
-  screen is still white.
-- The raw GitHub URL is a fine origin at current scale (one JSON fetch
-  per phone per day). If it ever isn't, put the manifest behind any
-  static host; the app only needs an HTTPS URL that returns this JSON.
+- Turn off `previewControlsEnabled` before a wider build.
+- Mac TestFlight build is behind (35); Daily doesn't exist there.
+- Dan's taste brief: "made pictures, not nature photos, not classical
+  paintings" (his references: a shin-hanga print of blue fish; a 1970s
+  gouache garden). AIC has almost no Koson and no public-domain Hasui;
+  Hokusai/Hiroshige/Harunobu are plentiful. The gouache-illustration mood
+  has no free library in quantity; generation was offered, undecided.
+- Artists, when they come: hand-added entries (any HTTPS URL, `credit`
+  with `sourceName` for "Name · Studio" or `source` unset for "Photo by").
+- Unsplash collections: `collection:<id>` works once Dan curates some.
+- `index(for:)` counts from the epoch's *local* start of day, so US zones
+  are one day ahead of a naive UTC `days % count`; the `-dailyPreviewOffset`
+  trick sidesteps that.
+- The raw GitHub URL is fine at current scale; any static HTTPS host
+  would do if it ever isn't.
 
 ## History
 
-- Sep 25: Daily theme built with a one-image bundled set and the remote
+- Sep 25: Daily theme with a one-image bundled set and the remote
   manifest scaffold.
-- Sep 28: Unsplash feed (pull script, credit + ping in the app), first
-  120-entry rotation pushed. mumo `42324e9`, memodaddy-daily `d554cf9`.
-- Sep 28, later: photo-matched palette in the app (mumo `97ccda4`), then
-  the curation page here replacing the pull script (`bc92b99`), then the
-  tuner-link legibility rule in both.
+- Sep 28: Unsplash feed (pull script, credit + ping), first 120-entry
+  rotation; photo-matched palette; curation page replacing the pull;
+  tuner/ring/fill legibility rules; credit above the wordmark; prefetch
+  + warm start; bundled cat removed; museum libraries; browse; shuffle;
+  pins; holidays. Builds 36 and 37 to TestFlight.
+- Sep 29: Hanukkah + Kwanzaa, multi-phrase holiday searches, re-roll
+  walks the pool, foldable pins row. Rotation pushed at 250.
